@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contextual Transformer | Capsule 4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .token-anim { animation: fadeInUp 0.3s ease-out forwards; opacity: 0; }
+        @keyframes fadeInUp { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body class="min-h-screen p-8 flex flex-col items-center">
+    <div class="max-w-2xl w-full text-center mb-10">
+        <span class="bg-blue-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">Capsule 04: Transformation</span>
+        <h1 class="text-4xl font-bold mt-4 italic">Neural Pitch Shaker</h1>
+        <p class="text-slate-400 mt-2">Actually uses your words to rebuild your pitch in 2026 styles.</p>
+    </div>
+
+    <div class="w-full max-w-3xl bg-slate-900 border border-slate-800 p-8 rounded-[2.5rem] shadow-2xl">
+        <textarea id="pitch-input" class="w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 h-32 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-slate-300 mb-6" placeholder="Paste your pitch here (e.g. My business is a waste management system for schools...)"></textarea>
+
+        <div class="flex gap-4 mb-8">
+            <button onclick="transform('genz')" class="flex-1 bg-pink-600 py-4 rounded-2xl font-bold active:scale-95 transition-all">Gen-Z Remix</button>
+            <button onclick="transform('ceo')" class="flex-1 bg-blue-600 py-4 rounded-2xl font-bold active:scale-95 transition-all">CEO Pivot</button>
+        </div>
+
+        <div id="output-box" class="hidden p-8 bg-black rounded-3xl border border-slate-800">
+            <div id="loading" class="text-blue-500 font-mono text-xs mb-4">REWRITING NEURAL WEIGHTS...</div>
+            <div id="result-text" class="text-xl leading-relaxed text-slate-200"></div>
+        </div>
+    </div>
+
+    <script>
+        const dictionary = {
+            'genz': {
+                'business': 'hustle', 'company': 'squad', 'people': 'main characters',
+                'problem': 'major ick', 'solution': 'vibe fix', 'help': 'support',
+                'school': 'campus', 'food': 'eats', 'money': 'bag', 'waste': 'trash behavior',
+                'app': 'platform', 'work': 'grind', 'community': 'tribe'
+            },
+            'ceo': {
+                'business': 'enterprise', 'company': 'conglomerate', 'people': 'human capital',
+                'problem': 'market inefficiency', 'solution': 'strategic vertical', 'help': 'optimize',
+                'school': 'educational facility', 'food': 'supply chain', 'money': 'liquidity',
+                'waste': 'redundancy', 'app': 'SaaS asset', 'work': 'execution', 'community': 'ecosystem'
+            }
+        };
+
+        function transform(mode) {
+            const input = document.getElementById('pitch-input').value;
+            if (!input.trim()) return;
+
+            const outputBox = document.getElementById('output-box');
+            const loading = document.getElementById('loading');
+            const resultText = document.getElementById('result-text');
+
+            outputBox.classList.remove('hidden');
+            resultText.innerHTML = '';
+            loading.classList.remove('hidden');
+
+            setTimeout(() => {
+                loading.classList.add('hidden');
+                
+                // Neural Transformation Logic
+                const words = input.split(/\s+/);
+                const transformed = words.map((word, i) => {
+                    const cleanWord = word.toLowerCase().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"");
+                    const mapped = dictionary[mode][cleanWord];
+                    
+                    if (mapped) {
+                        return `<span class="text-blue-400 font-bold token-anim" style="animation-delay: ${i*0.05}s">${mapped}</span>`;
+                    }
+                    return `<span class="token-anim" style="animation-delay: ${i*0.05}s">${word}</span>`;
+                });
+
+                let prefix = mode === 'genz' ? "No cap, " : "In terms of operational synergy, ";
+                let suffix = mode === 'genz' ? ". It's literally a vibe." : ". This scales globally.";
+                
+                resultText.innerHTML = prefix + transformed.join(' ') + suffix;
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

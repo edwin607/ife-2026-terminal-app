@@ -1,0 +1,33 @@
+@page {
+  size: A4;
+  margin: 1.5cm 1.8cm;
+  @bottom-center {
+    content: "IFE 2026 · Facilitator Reference";
+    font-size: 7pt;
+    color: #94a3b8;
+    font-family: Helvetica, Arial, sans-serif;
+  }
+}
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.5;
+  color: #1e293b;
+}
+h1 { font-size: 18pt; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 6pt; }
+h2 { font-size: 13pt; color: #1e293b; margin-top: 0.6cm; }
+h3 { font-size: 11pt; color: #334155; }
+table { width: 100%; border-collapse: collapse; margin: 0.3cm 0; font-size: 8pt; }
+th { background: #1e293b; color: white; padding: 5pt 7pt; text-align: left; font-size: 7.5pt; text-transform: uppercase; letter-spacing: 0.5pt; }
+td { padding: 4pt 7pt; border-bottom: 1px solid #e2e8f0; }
+tr:nth-child(even) td { background: #f8fafc; }
+blockquote {
+  background: #fffbeb;
+  border-left: 3pt solid #f59e0b;
+  padding: 6pt 12pt;
+  margin: 0.4cm 0;
+  font-size: 9pt;
+}
+code { background: #f1f5f9; padding: 1pt 4pt; border-radius: 2pt; font-size: 8pt; }
+hr { border: none; border-top: 1px solid #e2e8f0; margin: 0.5cm 0; }
+strong { color: #0f172a; }

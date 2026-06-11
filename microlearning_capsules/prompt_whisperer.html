@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Whisperer | Capsule 1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full card p-8 rounded-3xl shadow-2xl">
+        <div class="text-center mb-8">
+            <span class="bg-blue-500 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">Capsule 01: Precision</span>
+            <h1 class="text-3xl font-bold mt-4">The Prompt Whisperer</h1>
+            <p class="text-slate-400 mt-2">Can you make the AI guess the secret word?</p>
+        </div>
+
+        <div id="game-container">
+            <div class="bg-slate-900/50 p-6 rounded-2xl mb-6 border border-slate-700">
+                <p class="text-sm text-blue-400 uppercase font-bold mb-1">Secret Word</p>
+                <p id="secret-word" class="text-2xl font-bold tracking-tight">STAKEHOLDER</p>
+                
+                <div class="mt-4">
+                    <p class="text-xs text-red-400 uppercase font-bold mb-2">Forbidden Words (Don't use!)</p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="bg-red-500/10 border border-red-500/20 px-2 py-1 rounded text-xs">People</span>
+                        <span class="bg-red-500/10 border border-red-500/20 px-2 py-1 rounded text-xs">Money</span>
+                        <span class="bg-red-500/10 border border-red-500/20 px-2 py-1 rounded text-xs">Owner</span>
+                    </div>
+                </div>
+            </div>
+
+            <textarea id="prompt-input" rows="3" class="w-full bg-slate-800 border border-slate-600 rounded-xl p-4 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="Write your prompt here..."></textarea>
+            
+            <button onclick="submitPrompt()" class="w-full mt-4 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition-all active:scale-95">Send to AI</button>
+            
+            <div id="ai-response" class="mt-6 p-4 rounded-xl bg-blue-500/10 border border-blue-500/20 hidden">
+                <p class="text-xs text-blue-400 font-bold uppercase mb-1">AI Guess:</p>
+                <p id="guess-text" class="italic text-lg text-slate-200">"Is it... a business partner?"</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function submitPrompt() {
+            const input = document.getElementById('prompt-input').value.toLowerCase();
+            const forbidden = ['people', 'money', 'owner'];
+            const secret = 'stakeholder';
+            const responseDiv = document.getElementById('ai-response');
+            const guessText = document.getElementById('guess-text');
+
+            if (!input.trim()) return;
+
+            let failed = false;
+            forbidden.forEach(word => {
+                if (input.includes(word)) failed = true;
+            });
+
+            responseDiv.classList.remove('hidden');
+            
+            if (failed) {
+                guessText.innerHTML = "⚠️ ERROR: You used a forbidden word! The AI is confused.";
+                guessText.className = "text-red-400 font-bold";
+            } else if (input.includes('interest') || input.includes('impact') || input.includes('project')) {
+                guessText.innerHTML = "🎯 YES! Is it a STAKEHOLDER?";
+                guessText.className = "text-green-400 font-bold text-lg";
+            } else {
+                guessText.innerHTML = "🤔 Hmm, that's too vague. The AI thinks you mean 'a friend'. Try to be more technical!";
+                guessText.className = "text-slate-300 italic";
+            }
+        }
+    </script>
+</body>
+</html>

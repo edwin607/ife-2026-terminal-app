@@ -1,0 +1,250 @@
+@page {
+  size: A4;
+  margin: 1.5cm 1.8cm;
+  @bottom-center {
+    content: "IFE 2026 · AI Literacy Track";
+    font-size: 7pt;
+    color: #94a3b8;
+    font-family: Helvetica, Arial, sans-serif;
+  }
+}
+
+/* Cambio Labs Brand Colors */
+:root {
+  --primary-purple: #8a4487;
+  --deep-purple: #4d334f;
+  --secondary-teal: #269c9e;
+  --accent-coral: #fd6e60;
+  --accent-amber: #fdba42;
+  --neutral-light: #e5d9e2;
+  --neutral-muted: #c9c7c7;
+}
+
+body {
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-size: 9.5pt;
+  line-height: 1.45;
+  color: #2d3748;
+  background: #fefefe;
+}
+
+h1 {
+  font-family: "Montserrat", "Open Sans", sans-serif;
+  font-size: 20pt;
+  color: var(--primary-purple);
+  border-bottom: 3px solid var(--secondary-teal);
+  padding-bottom: 6pt;
+  margin-top: 0;
+}
+
+h2 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 14pt;
+  color: var(--deep-purple);
+  margin-top: 0.8cm;
+  border-bottom: 1.5px solid var(--neutral-light);
+  padding-bottom: 3pt;
+}
+
+h3 {
+  font-family: "Montserrat", sans-serif;
+  font-size: 11pt;
+  color: var(--primary-purple);
+  margin-top: 0.5cm;
+}
+
+h4 {
+  font-size: 10pt;
+  color: var(--secondary-teal);
+  margin-top: 0.3cm;
+}
+
+/* Accent styling */
+.accent {
+  color: var(--accent-coral);
+  font-weight: 600;
+}
+
+/* Headers with accent */
+h2.accent-header {
+  color: var(--accent-amber);
+}
+
+/* CTA buttons */
+.cta {
+  background: linear-gradient(135deg, var(--primary-purple), var(--secondary-teal));
+  color: white;
+  font-weight: 600;
+}
+
+/* Section dividers */
+section {
+  margin: 1.2cm 0;
+}
+
+section::before {
+  content: attr(data-section);
+  display: block;
+  color: var(--secondary-teal);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 1pt;
+  margin-bottom: 0.5cm;
+}
+
+/* Color swatches for branding reference */
+.color-swatch {
+  display: inline-block;
+  margin: 0.3cm;
+  padding: 0.5cm 1cm;
+  border-radius: 4px;
+  font-size: 8pt;
+  font-weight: 600;
+  color: white;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.color-primary { background: var(--primary-purple); }
+.color-deep { background: var(--deep-purple); }
+.color-secondary { background: var(--secondary-teal); }
+.color-coral { background: var(--accent-coral); }
+.color-amber { background: var(--accent-amber); }
+.color-light { background: var(--neutral-light); color: var(--deep-purple); }
+
+/* Table styling for structured data */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.3cm 0;
+  font-size: 8pt;
+}
+
+th {
+  background: var(--deep-purple);
+  color: white;
+  padding: 5pt 7pt;
+  text-align: left;
+  font-size: 7.5pt;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+
+td {
+  padding: 4pt 7pt;
+  border-bottom: 1px solid #e2e8f0;
+  vertical-align: top;
+}
+
+tr:nth-child(even) td {
+  background: var(--neutral-light);
+}
+
+/* Quote/callout boxes */
+blockquote {
+  background: linear-gradient(to right, var(--neutral-light), transparent);
+  border-left: 4px solid var(--accent-amber);
+  padding: 8pt 12pt;
+  margin: 0.5cm 0;
+  font-size: 9pt;
+  font-style: italic;
+  color: var(--deep-purple);
+}
+
+/* Code/monospace */
+code {
+  background: rgba(139, 69, 187, 0.1);
+  border: 1px solid rgba(139, 69, 187, 0.2);
+  padding: 1pt 4pt;
+  border-radius: 2pt;
+  font-family: "SF Mono", Monaco, monospace;
+  font-size: 8pt;
+  color: var(--primary-purple);
+}
+
+/* Progress/phase indicators */
+.phase-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--secondary-teal);
+  color: white;
+  font-weight: 600;
+  font-size: 10pt;
+  margin-right: 0.5cm;
+}
+
+/* Key takeaways box */
+.key-takeaway {
+  background: rgba(253, 186, 66, 0.1);
+  border: 1px solid rgba(253, 186, 66, 0.3);
+  padding: 10pt 12pt;
+  margin: 0.5cm 0;
+  border-radius: 4px;
+}
+
+.key-takeaway strong {
+  color: var(--accent-amber);
+}
+
+/* Timeline/TIMELINE */
+.timeline {
+  position: relative;
+  padding-left: 2cm;
+}
+
+timeline::before {
+  content: '';
+  position: absolute;
+  left: 0.5cm;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--secondary-teal);
+}
+
+timeline .item {
+  position: relative;
+  padding-bottom: 1.2cm;
+}
+
+timeline .item::before {
+  content: '';
+  position: absolute;
+  left: -0.4cm;
+  top: 4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-coral);
+  border: 2px solid white;
+}
+
+/* Week spines */
+.week-spine {
+  display: flex;
+  align-items: center;
+  gap: 0.5cm;
+  margin: 0.5cm 0;
+}
+
+.week-label {
+  background: var(--deep-purple);
+  color: white;
+  padding: 3pt 8pt;
+  border-radius: 12px;
+  font-size: 7pt;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5pt;
+}
+
+.week-content {
+  flex: 1;
+  padding: 4pt 8pt;
+  background: var(--neutral-light);
+  border-radius: 4px;
+  font-size: 8pt;
+}

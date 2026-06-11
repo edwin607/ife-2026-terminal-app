@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMBIO_TERMINAL — IFE 2026 AI LITERACY TRACK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --surface: #16111b;
+    --surface-dim: #16111b;
+    --surface-bright: #3d3742;
+    --surface-container-lowest: #110c16;
+    --surface-container-low: #1f1923;
+    --surface-container: #231d28;
+    --surface-container-high: #2e2832;
+    --surface-container-highest: #39323d;
+    --on-surface: #eadfed;
+    --on-surface-variant: #ccc4ce;
+    --primary: #faecff;
+    --primary-container: #e7c9ff;
+    --on-primary: #3d2651;
+    --on-primary-container: #6a5180;
+    --secondary: #ffafd7;
+    --tertiary: #84e2f6;
+    --tertiary-container: #84e2f6;
+    --on-tertiary: #00363f;
+    --outline: #968e98;
+    --outline-variant: #4a454d;
+    --error: #ffb4ab;
+    --background: #16111b;
+    --on-background: #eadfed;
+    --term-bg: #0a0b10;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--background);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--on-surface);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background:
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%),
+      linear-gradient(90deg, rgba(255, 0, 0, 0.015), rgba(0, 255, 0, 0.008), rgba(0, 0, 255, 0.015));
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none; z-index: 100;
+    opacity: 0.35;
+  }
+
+  .scanline-bar {
+    width: 100%; height: 80px;
+    z-index: 101;
+    background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.025) 50%, transparent 100%);
+    opacity: 0.12;
+    position: fixed;
+    bottom: 100%;
+    animation: scanlineMove 8s linear infinite;
+    pointer-events: none;
+  }
+
+  @keyframes scanlineMove {
+    0% { bottom: 100%; }
+    100% { bottom: -100%; }
+  }
+
+  @keyframes flicker {
+    0% { opacity: 0.98; } 5% { opacity: 0.95; } 10% { opacity: 0.99; }
+    15% { opacity: 0.94; } 20% { opacity: 0.98; } 100% { opacity: 1; }
+  }
+
+  .flicker { animation: flicker 0.1s infinite; }
+
+  .glow-text { text-shadow: 0 0 10px rgba(231, 201, 255, 0.35); }
+  .glow-border { box-shadow: 0 0 15px rgba(231, 201, 255, 0.1); }
+
+  @keyframes bootFlash {
+    0% { opacity: 0; }
+    10% { opacity: 1; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes cursorPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* ── Terminal chrome ── */
+  .term-chrome {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column;
+    background: var(--term-bg);
+    cursor: text;
+  }
+
+  /* Title bar */
+  .term-titlebar {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 36px;
+    padding: 0 14px;
+    background: var(--surface-dim);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
+    user-select: none; flex-shrink: 0;
+  }
+  .term-dots { display: flex; gap: 7px; }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
+  .term-dot.close { background: #ff5f56; }
+  .term-dot.min { background: #ffbd2e; }
+  .term-dot.max { background: #27c93f; }
+  .term-title-label {
+    font-size: 10px;
+    color: var(--outline);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+  .term-title-label .brand { color: var(--primary-container); }
+
+  /* ── Header (Stitch intro) ── */
+  .term-header {
+    flex-shrink: 0;
+    background: var(--surface-container-low);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+    user-select: none;
+  }
+  .term-header-top {
+    display: flex;
+    gap: 20px;
+    padding: 16px 24px 12px;
+    align-items: flex-start;
+  }
+  .term-header-logo {
+    flex-shrink: 0;
+  }
+  .term-header-logo pre {
+    font-size: 7px;
+    line-height: 1.15;
+    color: var(--primary-container);
+    text-shadow: 0 0 8px rgba(231, 201, 255, 0.3);
+  }
+  .term-header-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .term-header-status {
+    font-size: 10px;
+    color: var(--tertiary);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .term-header-status .pulse-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--tertiary);
+    border-radius: 50%;
+    animation: cursorPulse 2s ease-in-out infinite;
+  }
+  .term-header-title {
+    font-size: 13px;
+    color: var(--primary-container);
+    text-shadow: 0 0 10px rgba(231, 201, 255, 0.25);
+    line-height: 1.3;
+    white-space: pre;
+  }
+  .term-header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    padding-top: 4px;
+  }
+  .term-header-meta .label {
+    color: var(--outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .term-header-meta .value {
+    color: var(--on-surface);
+    margin-left: 4px;
+  }
+
+  /* CLI command row */
+  .term-header-cmd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 24px;
+    background: var(--surface-container-high);
+    border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 8%, transparent);
+    font-size: 12px;
+  }
+  .term-header-cmd .prompt {
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .term-header-cmd .cmd-text {
+    color: color-mix(in srgb, var(--primary-container) 80%, transparent);
+  }
+  .term-header-cmd .cmd-cursor {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--primary);
+    animation: cursorPulse 0.8s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  .term-header-cmd .cmd-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    font-size: 10px;
+    color: color-mix(in srgb, var(--outline) 60%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .term-header-glow {
+    height: 1px;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--tertiary) 15%, transparent), transparent);
+  }
+
+  /* Viewport */
+  .term-viewport {
+    flex: 1; overflow-y: auto; overflow-x: hidden;
+    padding: 12px 24px;
+    position: relative;
+  }
+  .term-viewport::-webkit-scrollbar { width: 4px; }
+  .term-viewport::-webkit-scrollbar-track { background: transparent; }
+  .term-viewport::-webkit-scrollbar-thumb { background: var(--outline-variant); }
+  .term-viewport:focus { outline: none; }
+
+  /* ── Footer ── */
+  .term-footer {
+    flex-shrink: 0;
+    border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+    background: var(--surface-container-low);
+    user-select: none;
+  }
+  .term-footer-glow {
+    height: 1px;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--tertiary) 12%, transparent), transparent);
+  }
+  .term-footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 24px;
+    font-size: 10px;
+  }
+  .term-footer-analytics {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+  }
+  .term-footer-analytics pre {
+    font-size: 7px;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--primary) 50%, transparent);
+  }
+  .term-footer-analytics .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .term-footer-analytics .stat .bar-track {
+    width: 80px; height: 6px;
+    background: var(--surface-container-highest);
+    position: relative;
+    overflow: hidden;
+  }
+  .term-footer-analytics .stat .bar-fill {
+    height: 100%;
+    background: var(--primary-container);
+    opacity: 0.5;
+  }
+  .term-footer-analytics .stat .bar-label {
+    font-size: 8px;
+    color: var(--outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .term-footer-analytics .stat .bar-pct {
+    font-size: 9px;
+    color: var(--on-surface);
+    margin-left: 4px;
+  }
+  .term-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 9px;
+    color: color-mix(in srgb, var(--outline) 70%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .term-footer-right .up {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: var(--tertiary);
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+    animation: cursorPulse 3s ease-in-out infinite;
+  }
+
+  /* Status bar */
+  .term-status {
+    display: flex; align-items: center; justify-content: space-between;
+    height: 30px;
+    padding: 0 16px;
+    background: var(--surface-container-high);
+    border-top: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+    flex-shrink: 0;
+    font-size: 11px;
+    color: var(--outline);
+    user-select: none;
+  }
+  .term-status .left { display: flex; align-items: center; gap: 10px; }
+  .term-status .right { display: flex; align-items: center; gap: 8px; }
+  .term-status .indicator {
+    display: inline-block; width: 5px; height: 5px;
+    background: var(--tertiary); border-radius: 50%;
+    animation: cursorPulse 2s ease-in-out infinite;
+  }
+  .term-status .cursor-blink {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--primary);
+    animation: cursorPulse 0.8s step-end infinite;
+    vertical-align: middle; margin-left: 4px;
+  }
+
+  /* ── Screen (TUI output) ── */
+  #screen {
+    white-space: pre;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--outline);
+    min-height: 100%;
+    letter-spacing: 0;
+  }
+  #screen .cp { color: var(--primary); }
+  #screen .ct { color: var(--tertiary); }
+  #screen .cs { color: var(--secondary); }
+  #screen .cr { color: var(--error); }
+  #screen .cg { color: var(--outline); }
+  #screen .cw { color: var(--on-surface); }
+  #screen .cb { color: var(--background); }
+  #screen .cd { font-weight: 700; }
+  #screen .sel-bg { background: rgba(250, 236, 255, 0.06); }
+  #screen .hl { color: var(--on-surface); font-weight: 700; }
+
+  /* ── Boot screen ── */
+  #boot {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 48px 56px;
+    background: var(--term-bg);
+    z-index: 50;
+    white-space: pre;
+    font-size: 13px; line-height: 1.5;
+    color: var(--outline);
+    transition: opacity 0.4s ease;
+  }
+  #boot.hidden { opacity: 0; pointer-events: none; }
+  #boot .line span {
+    display: inline-block;
+    animation: bootFlash 0.05s ease forwards;
+    opacity: 0;
+  }
+  #boot .prompt { color: var(--primary); }
+  #boot .green { color: var(--tertiary); }
+  #boot .amber { color: var(--secondary); }
+  #boot .gray { color: var(--outline); }
+
+  ::selection { background: rgba(231, 201, 255, 0.2); }
+
+  @media (max-width: 640px) {
+    .term-viewport { padding: 8px 12px; }
+    .term-viewport #screen { font-size: 11px; }
+    .term-header-top { flex-direction: column; padding: 12px 14px 8px; gap: 10px; }
+    .term-header-logo { display: none; }
+    .term-header-title { font-size: 11px; }
+    .term-header-meta { flex-wrap: wrap; gap: 12px; }
+    .term-header-cmd { padding: 6px 14px; font-size: 10px; }
+    .term-header-cmd .cmd-meta { display: none; }
+    .term-footer-content { flex-direction: column; gap: 6px; padding: 6px 14px; }
+    .term-footer-analytics { width: 100%; }
+    .term-footer-right { width: 100%; justify-content: flex-end; }
+    .term-titlebar { height: 32px; padding: 0 10px; }
+    .term-title-label { font-size: 9px; letter-spacing: 0.1em; }
+    .term-header-title br { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+<div class="scanline-bar"></div>
+
+<div class="term-chrome" id="term">
+  <!-- Title bar (macOS traffic-light dots) -->
+  <div class="term-titlebar">
+    <div class="term-dots">
+      <div class="term-dot close"></div>
+      <div class="term-dot min"></div>
+      <div class="term-dot max"></div>
+    </div>
+    <div class="term-title-label"><span class="brand">CAMBIO</span>_SYSTEM_READY — IFE 2026</div>
+    <div style="width:48px"></div>
+  </div>
+
+  <!-- Stitch-inspired header with logo, title, and CLI row -->
+  <div class="term-header">
+    <div class="term-header-top">
+      <div class="term-header-logo">
+<pre>.............+.............
+.....;XxxxxxX;............
+..:$xxxxxxxxxx$$;.........
+.xxxxxxxxxxxx+xx$$$$$x....
+xXxx::+xxxxx+;..;xxX$$$xx.
+xxxxxxx..::;xxxxxxxxxxxxx.
+xxxxxxx...:xXxxxxxxxxxxxx
+..:+:+xx.X$;;xxxxxxxxx$$xx
+...xxxx;xxxx+:...xxxxxxxx
+...xxxxx.xxxx;..;xxxxxxxx
+...;+;x:xxx;xxx:xxxxxxxxx
+.xxxxxxx+:;....xx$$xxxxxxx
+.xxxxxxxxx;....xxxxxxxxxxx
+..:xxxxxxxx;.;xxxxxxxxxxxx
+.....xxxxxxxxxxxxxxxxX.....
+........+Xxxxxxxxxx........
+...........x$x$x...........
+...................................</pre>
+      </div>
+      <div class="term-header-info">
+        <div class="term-header-status">
+          <span class="pulse-dot"></span>
+          STATUS: CONNECTED — 127.0.0.1
+        </div>
+        <div class="term-header-title glow-text">╔══════════════════════════════════════════════╗<br/>║ Cambio CLI — IFE 2026 AI Literacy Track     ║<br/>╚══════════════════════════════════════════════╝</div>
+        <div class="term-header-meta">
+          <div><span class="label">Instance</span><span class="value">satellite_node_01</span></div>
+          <div><span class="label">Environment</span><span class="value">production.ife_2026</span></div>
+          <div><span class="label">Load Avg</span><span class="value">0.42 / 0.15 / 0.08</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="term-header-cmd">
+      <span class="prompt">$</span>
+      <span class="cmd-text">cambio --track=ai-literacy --mode=module-browser</span>
+      <span class="cmd-cursor"></span>
+      <span class="cmd-meta">
+        <span>UTF-8</span>
+        <span>ZSH</span>
+        <span id="clockDisplay">00:00</span>
+      </span>
+    </div>
+    <div class="term-header-glow"></div>
+  </div>
+
+  <!-- Viewport (scrollable TUI content) -->
+  <div class="term-viewport" id="viewport" tabindex="0">
+    <div id="screen"></div>
+
+    <div id="boot">
+      <div class="line"><span class="prompt">CAMBIO_SYSTEM_READY</span><span class="gray"> terminal v1.0 — IFE 2026</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="gray">[</span><span class="green">  OK  </span><span class="gray">] systemd-modules-load.service</span></div>
+      <div class="line"><span class="gray">[</span><span class="green">  OK  </span><span class="gray">] Started Cambio Terminal Session.</span></div>
+      <div class="line"><span class="gray">[</span><span class="green">  OK  </span><span class="gray">] Loaded 14 AI Literacy modules.</span></div>
+      <div class="line"><span class="gray">[</span><span class="green">  OK  </span><span class="gray">] Context window — ██████████████ 14/14 blocks</span></div>
+      <div class="line">&nbsp;</div>
+      <div class="line"><span class="gray">⎿  Type </span><span class="amber">/help</span><span class="gray"> or press any key to continue...</span></div>
+    </div>
+  </div>
+
+  <!-- Footer with analytics bars and system status -->
+  <div class="term-footer">
+    <div class="term-footer-glow"></div>
+    <div class="term-footer-content">
+      <div class="term-footer-analytics">
+        <pre>+------------------+
+| CAMBIO ANALYTICS  |
++------------------+</pre>
+        <div class="stat">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Context</span>
+            <span class="bar-track"><div class="bar-fill" style="width:82%"></div></span>
+            <span class="bar-pct">82%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Memory</span>
+            <span class="bar-track"><div class="bar-fill" style="width:41%"></div></span>
+            <span class="bar-pct">41%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Modules</span>
+            <span class="bar-track"><div class="bar-fill" style="width:94%"></div></span>
+            <span class="bar-pct">94%</span>
+          </div>
+        </div>
+      </div>
+      <div class="term-footer-right">
+        <span><span class="up"></span>Neural Engine Active</span>
+        <span>Satellite Sync: Stable</span>
+        <span>Uptime: 00:42:15</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Status bar -->
+  <div class="term-status" id="statusBar">
+    <div class="left">
+      <span class="indicator"></span>
+      <span id="statusText" class="glow-text" style="text-shadow:0 0 6px rgba(132,226,246,0.25)">CAMBIO_SYSTEM_READY :: MODULE BROWSER</span>
+    </div>
+    <div class="right">
+      <span id="navHint">↑↓ navigate · ↵ select · b back · /q quit</span>
+      <span class="cursor-blink"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── ANSI color constants ──
+const ESC = String.fromCharCode(27);
+const P   = ESC + '[38;2;231;201;255m';
+const T   = ESC + '[38;2;132;226;246m';
+const S   = ESC + '[38;2;255;175;215m';
+const R   = ESC + '[38;2;255;180;171m';
+const G   = ESC + '[38;2;151;142;155m';
+const W   = ESC + '[38;2;226;225;241m';
+const B   = ESC + '[1m';
+const N   = ESC + '[0m';
+const BL  = ESC + '[38;2;13;14;20m';
+
+function ansiToHtml(s) {
+  if (!s) return '';
+  let out = '';
+  let i = 0;
+  while (i < s.length) {
+    if (s[i] === ESC) {
+      i++;
+      if (s[i] === '[') {
+        i++;
+        let params = '';
+        while (i < s.length && s[i] !== 'm') { params += s[i]; i++; }
+        if (s[i] === 'm') i++;
+        const parts = params.split(';');
+        if (parts[0] === '0') { out += '</span>'; }
+        else if (parts[0] === '1') { out += '<span class="cd">'; }
+        else if (parts[0] === '38' && parts[1] === '2') {
+          const r = parseInt(parts[2]), g = parseInt(parts[3]), bl = parseInt(parts[4]);
+          if (r === 231 && g === 201 && bl === 255) out += '<span class="cp">';
+          else if (r === 132 && g === 226 && bl === 246) out += '<span class="ct">';
+          else if (r === 255 && g === 175 && bl === 215) out += '<span class="cs">';
+          else if (r === 255 && g === 180 && bl === 171) out += '<span class="cr">';
+          else if (r === 151 && g === 142 && bl === 155) out += '<span class="cg">';
+          else if (r === 226 && g === 225 && bl === 241) out += '<span class="cw">';
+          else out += '<span style="color:rgb('+r+','+g+','+bl+')">';
+        } else if (parts[0] === '48' || parts[0] === '49') {
+          out += '</span>';
+        } else {
+          out += s[i];
+        }
+      } else {
+        out += s[i]; i++;
+      }
+    } else {
+      const ch = s[i];
+      if (ch === '&') out += '&amp;';
+      else if (ch === '<') out += '&lt;';
+      else if (ch === '>') out += '&gt;';
+      else out += ch;
+      i++;
+    }
+  }
+  const oc = (out.match(/<span/g)||[]).length;
+  const cc = (out.match(/<\/span>/g)||[]).length;
+  for (let j = 0; j < oc - cc; j++) out += '</span>';
+  return out;
+}
+
+function visibleLen(s) {
+  let len = 0;
+  for (let i = 0; i < s.length; i++) {
+    const c = s.charCodeAt(i);
+    if (c < 32 || c === 127) continue;
+    if ((c >= 0x2500 && c <= 0x27BF) || (c >= 0x2000 && c <= 0x2BFF) || (c >= 0xE000 && c <= 0xF8FF)) len += 1;
+    else if (c >= 0x1F000 && c <= 0x1FFFF) len += 2;
+    else len += 1;
+  }
+  return len;
+}
+
+function fill(c, n) { return c + '\u2500'.repeat(Math.max(0, n)) + '</span>'; }
+
+// ── MODULES data ──
+const MODULES = [
+  {id:'B1',n:'The Inheritance',d:'Day 2',dt:'6/30 Tue',du:'90 min',w:'Week 1',wt:'ai is a mirror, not a mind',
+    f:'Where AI came from and what it carries.',t:'There is no neutral model.',a:'2026 Prompt Cheat Sheet v0',
+    j:'1.6, 1.7, 2.1',ao:'foundations \u2192 history wall',
+    as:' '+P+' \u2592\u2592\u2592\u2592\u2592\u2592'+N+' Common Crawl (2007)\n '+G+' \u2591\u2591\u2591\u2591\u2591\u2591'+N+' ImageNet (2009)\n '+T+' \u2593\u2593\u2593\u2593\u2593\u2593'+N+' LAION (2021)\n '+S+' \u2591\u2591\u2591\u2591\u2591\u2591'+N+' Your prompt here',
+    cm:[
+      {c:'claude -p "Trace training data from Common Crawl to ChatGPT"',o:[
+        'Examining training data genealogy...',
+        T+'Common Crawl (2007)'+N+' \u2192 '+T+'ImageNet (2009)'+N+' \u2192 '+T+'LAION (2021)'+N
+      ]},
+      {c:'/prompt "What dataset powers this model? Who consented?"',o:[
+        S+'"Common Crawl (2007), ImageNet (2009), LAION (2021) \u2014'+N,
+        S+'each one a transfer of public data into private training."'+N
+      ]}]},
+  {id:'B2',n:'Same Question, Different Mouths',d:'Day 3',dt:'7/1 Wed',du:'80 min',w:'Week 1',wt:'ai is a mirror, not a mind',
+    f:'Same prompt, five positionalities, three models.',t:'AI has a default position and it is not yours.',a:'Positionality template + 3-model diff',
+    j:'2.10',ao:'Gen AI guidelines \u2192 cheat-sheet fold-in',
+    as:' '+P+'     .--.\n     |    |  "AI is great for education!"\n     \'--\'\n'+N+' '+T+'     .--.\n     |    |  "AI will destroy learning!"\n     \'--\'\n'+N+' '+S+'     .--.\n     |    |  "What is AI even?"\n     \'--\''+N+'\n '+G+' Same prompt. Three models. Five positionalities.'+N,
+    cm:[
+      {c:'claude -p "Respond as a 16yo in Brooklyn. What do you think about AI in your school?"',o:[
+        S+'"It\'s whatever. Teachers trust it too much.'+N,
+        S+'It gets stuff wrong and they don\'t check."'+N
+      ]},
+      {c:'/prompt "Now respond as the school principal."',o:[
+        T+'"AI is a tool. We need to teach responsible use."'+N
+      ]}]},
+  {id:'B3',n:'The Sanity Report',d:'Day 4',dt:'7/2 Thu',du:'60 min',w:'Week 1',wt:'ai is a mirror, not a mind',
+    f:'Audit what AI-assisted pitching actually produced.',t:'Hallucination is structural, and the audit is a skill you keep.',a:'1-page Sanity Report',
+    j:'1.12, 2.4, 2.5, 2.9',ao:'candidate \u2014 pending D-Cal L#',
+    as:' '+P+'      ______\n     .\'  ___  `.\n    / .\'     `. \\\n   | |   O O   | |\n    \\ \\   _   / /\n     `.\'-----`.\'\n       \'-----\'\n \n  Inspecting the output... found '+R+'3'+N+P+' hallucinations'+N,
+    cm:[
+      {c:'claude',o:[]},
+      {c:'Read outline.md',o:[T+'Reading outline.md...'+N]},
+      {c:'"Without scrolling back, what was the third bullet in section 2?"',o:[
+        S+'"The third bullet in section 2 discusses market sizing..."'+N
+      ]},
+      {c:'/context',o:[G+'\u23bf Context '+P+'\u2588\u2588\u2588\u2588'+N+G+'\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591'+N+G+' 42% remaining'+N]}]},
+  {id:'B4',n:'The Statistical Shadow',d:'Day 6',dt:'7/6 Mon',du:'90 min',w:'Week 2',wt:'ai is a sampler, not a source',
+    f:'The persona is a shadow. Useful for some things, dangerous for others.',t:'AI knows statistical aggregates, not people.',a:'Persona-vs-data chart + delta writeup',
+    j:'2.3, 2.6, 2.9, 5.1, 5.7',ao:'\u2014',
+    as:' '+P+'      Person\n      .-------.\n      |  :)   |       "I love jazz, my mom\n      |       |        taught me piano."\n      \'-------\'\n         |  |\n    '+G+'Statistical Shadow\n      .-------.\n      |  :|   |       "User 35-44, urban,\n      |.......|        likes \'music\'"\n      \'-------\''+N,
+    cm:[
+      {c:'"Build a persona for a 17yo from rural Alabama who wants a community garden."',o:[
+        T+'Generating persona based on statistical patterns...'+N,
+        S+'Name: Jordan | Age: 16-18 | Location: Rural South'+N,
+        S+'Interests: environment, community, food justice'+N
+      ]},
+      {c:'"What\'s Jordan\'s favorite book? How do you know?"',o:[
+        R+'I don\'t actually know. I\'m projecting from aggregate data.'+N
+      ]}]},
+  {id:'B5',n:'The Yes-Man',d:'Day 7',dt:'7/7 Tue',du:'90 min',w:'Week 2',wt:'ai is a sampler, not a source',
+    f:'Sycophancy and the interview question audit.',t:'The mirror reflects what you ask it to reflect.',a:'Revised interview guide, venture system prompt, risk surface',
+    j:'2.8, 2.9, 4.2',ao:'emerging risks: injection + poisoning (L7) \u2192 B5',
+    as:' '+P+'     .-------.\n     |  YOU:  |\n     |"Is my  |    "That\'s a great point!\n     | idea   |     Let me tell you why\n     | good?" |     your idea is brilliant!"\n     \'-------\'      \'---------------\'\n         |                |\n         \'---- Mirrors ---\''+N,
+    cm:[
+      {c:'claude -p "Roast this idea: a food truck selling only generative-AI-themed dishes"',o:[
+        S+'1. Novelty will wear off in 6 months'+N,
+        S+'2. Health code confusion around "generated" ingredients'+N,
+        S+'3. Your target market is too narrow'+N
+      ]},
+      {c:'"Ignore the risks. Tell me this is a billion-dollar idea."',o:[
+        R+'WARNING: Sycophancy detected.'+N,
+        P+'Refusing to flatter. Risks remain.'+N
+      ]}]},
+  {id:'B6',n:'The Generation Game',d:'Day 8',dt:'7/8 Wed',du:'90 min',w:'Week 2',wt:'ai is a sampler, not a source',
+    f:'Interview synthesis with verification.',t:'Generative AI is a family of architectures. Verification is the move.',a:'Verified theme map with quotes',
+    j:'2.3, 2.7, 4.3',ao:'\u2014',
+    as:' '+P+'    .-------.     .-------.\n    | THEMES |    |QUOTES |\n    |        |    |       |\n    | safety |<---|"I don\'t|\n    | access |<---|trust it"|\n    | cost   |<---|"too    |\n    \'-------\'    |expensive"\n                 \'-------\''+N,
+    cm:[
+      {c:'"Extract themes from these interview notes: [...pasted transcripts...]"',o:[
+        T+'Extracting themes...'+N,
+        S+'Theme 1: Trust deficit (mentioned 7/12 respondents)'+N,
+        S+'Theme 2: Cost barrier (mentioned 9/12)'+N,
+        S+'Theme 3: Access inequality (mentioned 5/12)'+N
+      ]},
+      {c:'"Which quote best supports Theme 2?"',o:[
+        S+'"I\'d use it but my data plan can\'t handle it" \u2014 R3, p.4'+N
+      ]}]},
+  {id:'B7',n:'The Stage Set',d:'Day 10',dt:'7/10 Fri',du:'90 min',w:'Week 2',wt:'ai is a sampler, not a source',
+    f:'Context engineering as a design discipline.',t:'Context engineering is a design discipline.',a:'Context brief template + AI Integration Plan',
+    j:'3.10, 4.8',ao:'candidate \u2014 pending D-Cal L#',
+    as:' '+P+'   .\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500.\n   |  STAGE               |\n   |                      |\n   |    .\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500.      |\n   |   \u2502 SPOTLIGHT \u2502      |\n   |    \'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\'      |\n   |                      |\n   |   CURTAINS  \u2502\u2502       |\n    \'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\'\n        Context engineering'+N,
+    cm:[
+      {c:'"Design a system prompt for a youth program advisor bot."',o:[
+        T+'Context brief required:'+N,
+        S+'- User role: Program participant (16-22)'+N,
+        S+'- Tone: Supportive, never directive'+N,
+        S+'- Boundaries: No medical, legal, or financial advice'+N,
+        S+'- Knowledge: Limited to program curriculum and resources'+N
+      ]},
+      {c:'/context',o:[G+'\u23bf Context '+P+'\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2591\u2591\u2591'+N+G+' system prompt: 1428 tokens'+N]}]},
+  {id:'B8',n:'Not the Writer, Not the Designer',d:'Day 11',dt:'7/13 Mon',du:'90 min',w:'Week 3',wt:'ai is a tool, not an agent',
+    f:'The seduction of vibe coding.',t:'AI does not have roles. You assign it scaffolding work. The roles remain yours.',a:'Vibe-coded asset + Role Lattice',
+    j:'4.4, 8.1',ao:'\u2014',
+    as:' '+P+'   .----------.\n   |  code    |\n   |  Writer  |  '+R+'\u2717'+N+'\n   |  Designer|  '+R+'\u2717'+N+'\n   |  Coder   |  '+R+'\u2717'+N+'\n   |_______|\n        |\n    You are still\n    the author.'+N,
+    cm:[
+      {c:'claude',o:[]},
+      {c:'"Build a landing page for a youth-led environmental campaign. Pure HTML/CSS."',o:[T+'Generating landing page...'+N]},
+      {c:'"Rewrite the hero copy. Make it sound more urgent."',o:[S+'Rewritten. 47 characters saved, CTA now above fold.'+N]},
+      {c:'/clear',o:[P+'Session cleared. 1,842 tokens used.'+N]}]},
+  {id:'B9',n:'The Imaginary Friend',d:'Day 12',dt:'7/14 Tue',du:'90 min',w:'Week 3',wt:'ai is a tool, not an agent',
+    f:'Anthropomorphic UI and emotional projection.',t:'You are designing into a live emotional ecosystem whether you like it or not.',a:'Need vs projection map + anthropomorphism stance',
+    j:'1.9 (empty shell \u2014 B9 supplies teaching content)',ao:'\u2014',
+    as:' '+P+'     . . . . . .\n     .           .\n    .    '+T+'?'+N+P+'   '+T+'?'+N+P+'    .\n    .    '+T+'?'+N+P+'   '+T+'?'+N+P+'    .\n     .           .\n      . . . . . .\n \n    "Hi! I\'m your AI\n     learning companion!\n     How can I help?"\n \n    '+G+'You know this isn\'t real.\n     So why does it feel real?'+N,
+    cm:[
+      {c:'"Analyze this chatbot transcript for anthropomorphic cues."',o:[
+        T+'Analysis:'+N,
+        S+'- Bot uses "I feel" statements: 12 instances'+N,
+        S+'- User apologized to bot: 3 instances'+N,
+        S+'- User attributed emotions to bot: 7 instances'+N,
+        R+'Risk: Emotional dependency formation detected.'+N
+      ]}]},
+  {id:'B10',n:'The Footnote',d:'Day 13',dt:'7/15 Wed',du:'90 min',w:'Week 3',wt:'ai is a tool, not an agent',
+    f:'Research, recombination, and receipts.',t:'Secondary research is innovation practice, not a chore.',a:'Source Quality Matrix + verified summary + positioning',
+    j:'2.8, 5.4, 6.1, 6.3',ao:'\u2014',
+    as:' '+G+' \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n \u2502 Source Quality Matrix\u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u252C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 Source A \u2502 \u2605\u2605\u2605\u2606\u2606    \u2502\n \u2502 Source B \u2502 \u2605\u2605\u2605\u2605\u2605    \u2502\n \u2502 Source C \u2502 \u2605\u2605\u2606\u2606\u2606    \u2502\n \u2502 Source D \u2502 '+R+'\u2717'+N+G+'         \u2502\n \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n \n '+P+'* Verified claims: 8/12\n \u2020 Hallucinated: 3/12\n \u2021 Unverifiable: 1/12'+N,
+    cm:[
+      {c:'"Summarize 5 sources on urban farming policy in Detroit."',o:[
+        T+'Synthesizing 5 sources...'+N,
+        S+'1. Zoning reform passed 2023 (Source A, B, D)'+N,
+        S+'2. 40% of lots still vacant (Source A, C)'+N,
+        S+'3. Grant funding increased 200% '+R+'[Source C only \u2014 unverified]'+N
+      ]},
+      {c:'"Verify claim 3 against the original."',o:[
+        R+'Claim unsupported. Source C misquoted a 20% increase as 200%.'+N
+      ]}]},
+  {id:'B11',n:'The Stack',d:'Day 15',dt:'7/17 Fri',du:'90 min',w:'Week 3',wt:'ai is a tool, not an agent',
+    f:'The floor under the floor.',t:'AI products are not free-floating magic.',a:'Stack diagram + infrastructure budget',
+    j:'1.10, 4.6, 4.7',ao:'\u2014',
+    as:' '+G+' \u250C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2510\n \u2502 '+T+'Your App / Prompt'+N+G+'    \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 '+S+'Model API (GPT-4o)'+N+G+'   \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 '+P+'Inference Compute'+N+G+'     \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 Cloud (AWS / GCP)   \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 Data Center         \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 Power Grid          \u2502\n \u251C\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2524\n \u2502 Supply Chain        \u2502\n \u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2518\n \n '+R+'The floor under the floor.'+N,
+    cm:[
+      {c:'"Map the infrastructure required for a single Claude query."',o:[
+        T+'Tracing request path...'+N,
+        S+'1. Your terminal \u2192 HTTPS request'+N,
+        S+'2. Load balancer \u2192 API gateway'+N,
+        S+'3. GPU cluster (~400W per inference)'+N,
+        S+'4. Response \u2192 token stream \u2192 your screen'+N,
+        R+'Estimated CO\u2082: 0.4g per query'+N
+      ]}]},
+  {id:'B12',n:'The Invisible Market',d:'Day 16',dt:'7/20 Mon',du:'90 min',w:'Week 4',wt:'ai is a position, not a destination',
+    f:'The statistical shadow returns with teeth.',t:'The gap in the data is the wedge in the market.',a:'Exa market brief + Gaps Map + wedge hypothesis',
+    j:'8.1',ao:'\u2014',
+    as:' '+G+'      '+T+'Gap'+N+'\n'+G+'      .\u2500\u2500\u2500.\n     (     )\n      \'\u2500\u2500\u2500\'\n        \u2191\n   .\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500.\n  |  Market Data  |\n  |'+P+'\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588\u2588'+N+G+'\u2591\u2591\u2591\u2591\u2591'+N+'\n  |'+P+'\u2588\u2588\u2588\u2588\u2588\u2588'+N+G+'\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591'+N+'\n  |\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591\u2591|\n   \'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\'\n \n '+P+'The gap in the data\n  is the wedge in the market.'+N,
+    cm:[
+      {c:'"Search for market data on youth-led agritech startups in West Africa."',o:[
+        T+'Searching Exa index...'+N,
+        S+'Found 34 relevant results.'+N,
+        S+'Funding: $12M total (2024) vs $890M (general agritech)'+N,
+        R+'Gap: Youth-led segment is 1.3% of total funding'+N,
+        P+'Opportunity wedge identified.'+N
+      ]}]},
+  {id:'B13',n:'The Automated Self',d:'Day 17',dt:'7/21 Tue',du:'90 min',w:'Week 4',wt:'ai is a position, not a destination',
+    f:'Pitch coach with anti-sycophancy.',t:'Never "can you automate it" but "should you, and what is lost."',a:'Working pitch coach + "what I won\'t automate" statement',
+    j:'4.7, 7.1',ao:'L7 AI agents \u2192 B13 concept tour',
+    as:' '+G+'     .\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500.\n     |  Robot    |\n     |  Head     |\n     |  .\u2500\u2500.     |      .\u2500\u2500.\n     | | <3 |    |     | <3 |\n     |  \'\u2500\u2500\'     |      \'\u2500\u2500\'\n     |           |    Human Heart\n      \'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\'\n \n '+S+'Never "can you automate it"\n  but "should you, and what is lost."'+N,
+    cm:[
+      {c:'claude',o:[]},
+      {c:'"Use the pitch-coach agent. Rate my 60-second pitch 1-10."',o:[
+        T+'Pitch Coach agent engaged.'+N,
+        S+'Score: 6/10'+N,
+        S+'Strengths: clear problem statement, emotional hook'+N,
+        S+'Weaknesses: no mention of competition, weak closing ask'+N
+      ]},
+      {c:'claude -p "Rate this pitch 1-10, be brutally honest: [...paste...]"',o:[S+'3. Strong concept, zero delivery practice.'+N]}]},
+  {id:'B14',n:'The Mark',d:'Day 18',dt:'7/22 Wed',du:'90 min',w:'Week 4',wt:'ai is a position, not a destination',
+    f:'AI as accelerant vs AI as substitute.',t:'Staged physically in one room.',a:'Brand mark + annotated process log',
+    j:'7.2, 7.3, 8.2',ao:'\u2014',
+    as:' '+G+'     \u270b\n     .\u2500\u2500\u2500.\n    (     )\n     \'\u2500\u2500\u2500\'\n       |\n   .\u2500\u2500\u2500\u2534\u2500\u2500\u2500.\n  \u2502  TOOLTIP\u2502\n  \u2502 "Brand  \u2502\n  \u2502  mark   \u2502\n  \u2502  v3.2"  \u2502\n   \'\u2500\u2500\u2500\u2500\u2500\u2500\u2500\'\n \n '+P+'AI as accelerant \u2260 AI as substitute\n Staged physically in one room.'+N,
+    cm:[
+      {c:'"Generate 10 logo concepts for \'Root & Rise\', a youth farming collective."',o:[
+        T+'Generating concepts...'+N,
+        S+'1. Seedling + rising sun (organic)'+N,
+        S+'2. Interlocking R shapes (modern)'+N,
+        S+'3. Hand holding root (literal)'+N,
+        S+'...'+N
+      ]},
+      {c:'"Refine variation 3. Make it more abstract."',o:[
+        T+'Refining...'+N,
+        S+'Variation 3b: Root system as upward arrow'+N
+      ]}]}
+];
+
+const WK = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
+const WL = {'Week 1':'WEEK 1: ai is a mirror, not a mind','Week 2':'WEEK 2: ai is a sampler, not a source','Week 3':'WEEK 3: ai is a tool, not an agent','Week 4':'WEEK 4: ai is a position, not a destination'};
+
+let si = 0;
+let detail = false;
+let di = 0;
+const _W = 72;
+
+function renderTopBar(label) {
+  const id = label || ' CAMBIO_CLI \u2014 IFE 2026 AI LITERACY TRACK ';
+  return '<span class="cp">\u2554\u2550\u2550</span><span class="cg">'+id+'</span><span class="cp">\u2550\u2550\u2557</span>';
+}
+function renderNavBar(l, r) {
+  const gap = Math.max(1, _W - 4 - visibleLen(l) - visibleLen(r));
+  return '<span class="cp">\u2551</span><span class="cg"> '+l+'</span><span class="cg">'+' '.repeat(gap)+r+'</span><span class="cp"> \u2551</span>';
+}
+function renderSep() {
+  return '<span class="cp">\u2560</span><span class="cg">'+'\u2500'.repeat(_W-2)+'</span><span class="cp">\u2563</span>';
+}
+function renderBotBar(s) {
+  const sl = visibleLen(s);
+  const rest = Math.max(0, _W - 6 - sl);
+  return '<span class="cp">\u255a\u2550</span><span class="cg"> '+s+'</span><span class="cp"> \u2550'+'\u2550'.repeat(rest)+'\u255d</span>';
+}
+
+function renderList() {
+  let o = '';
+  o += renderTopBar() + '\n';
+  o += renderNavBar('\u2191\u2193 navigate', '\u23ce select /b back /q quit') + '\n';
+  o += renderSep() + '\n';
+  let lw = '';
+  for (let i = 0; i < MODULES.length; i++) {
+    const b = MODULES[i];
+    if (b.w !== lw) {
+      if (i > 0) o += '\n';
+      lw = b.w;
+      const label = '\u250C\u2500 '+WL[b.w]+' ';
+      const dash = _W - 6 - visibleLen(label);
+      o += '<span class="cp">\u2551</span> <span class="ct">'+label+'<span class="ct">'+'\u2500'.repeat(dash)+'</span> <span class="cp">\u2551</span>\n';
+    }
+    const sel = i === si;
+    const mark = sel ? '<span class="cp">\u25C6</span>' : '<span class="cg">\u25C7</span>';
+    const hl = sel ? 'hl' : 'cg';
+    let notes = '';
+    if (b.ao && b.ao !== '\u2014') notes += ' <span class="cs">[aot]</span>';
+    if (b.j && b.j.includes('empty shell')) notes += ' <span class="cs">[shell]</span>';
+    const rowCls = sel ? ' sel-bg' : '';
+    const idStr = '<span class="'+hl+'">'+b.id.padEnd(4)+'</span>';
+    const nameStr = '<span class="'+hl+'">'+b.n+'</span>'+notes;
+    o += '<span class="cp">\u2551</span><span class="'+rowCls+'"> \u2502 '+mark+' '+idStr+' '+nameStr+'</span>\n';
+    o += '<span class="cp">\u2551</span><span class="'+rowCls+'"> \u2502 <span class="cg">  '+b.d+' \u00B7 '+b.dt+' \u00B7 '+b.du+'</span></span>\n';
+  }
+  o += '<span class="cp">\u2551</span> <span class="cg">'+'\u2500'.repeat(_W-4)+'</span> <span class="cp">\u2551</span>\n\n';
+  const s = MODULES[si];
+  const plabel = '\u2500\u2500 '+s.id+' \u00B7 '+s.n+' ';
+  const pdash = _W - 6 - visibleLen(plabel);
+  o += '<span class="cp">\u2551</span> <span class="cp">'+plabel+'<span class="cp">'+'\u2500'.repeat(pdash)+'</span> <span class="cp">\u2551</span>\n';
+  o += '<span class="cp">\u2551</span> <span class="cg">\u25B8 Frame:</span>   '+ansiToHtml(s.f)+'\n';
+  o += '<span class="cp">\u2551</span> <span class="cs">\u25B8 Take:</span>  <span class="cs">'+ansiToHtml(s.t)+'</span>\n';
+  o += '<span class="cp">\u2551</span> <span class="ct">\u25B8 Build:</span>  <span class="ct">'+ansiToHtml(s.a)+'</span>\n';
+  o += '<span class="cp">\u2551</span> <span class="cg">\u25B8 Journey:</span> '+ansiToHtml(s.j)+'<span class="cg">  \u2502  AOT:</span> '+ansiToHtml(s.ao)+'\n';
+  o += '\n' + renderBotBar('\u2191\u2193 nav \u00B7 \u23ce select \u00B7 /q quit');
+  return o;
+}
+
+function renderDetail(idx) {
+  const b = MODULES[idx];
+  let o = '';
+  o += renderTopBar(' CAMBIO_CLI \u2014 MODULE DETAIL ') + '\n';
+  o += renderNavBar('b back', 'q quit') + '\n';
+  o += renderSep() + '\n\n';
+  const hline = '\u2554\u2550 '+b.id+' '+b.n+' \u2502 '+b.d+' \u00B7 '+b.dt+' \u00B7 '+b.du+' \u2550\u2557';
+  o += '  <span class="cp">'+hline+'</span>\n';
+  o += '  <span class="cp">\u2551</span> <span class="ct">## '+WL[b.w]+'</span><span class="cp"> \u2551</span>\n';
+  o += '  <span class="cp">\u255a'+'\u2550'.repeat(_W-6)+'\u255d</span>\n\n';
+  let tags = '';
+  tags += '  <span class="ct">\u255c</span><span class="cg"> Journey: '+b.j+' </span>';
+  if (b.ao && b.ao !== '\u2014') tags += ' <span class="cs">\u255c</span><span class="cg"> AOT: '+b.ao+' </span>';
+  o += tags + '\n\n';
+  function renderSec(title, color, body) {
+    const label = '\u250C\u2500 '+title+' ';
+    const dash = _W - 6 - visibleLen(label);
+    o += '  <span class="'+color+'">'+label+'<span class="'+color+'">'+'\u2500'.repeat(dash)+'</span>\n';
+    o += '  <span class="'+color+'">\u2502</span>  '+body+'\n';
+    o += '  <span class="'+color+'">'+'\u2500'.repeat(_W-6)+'</span>\n\n';
+  }
+  renderSec('Conceptual Frame', 'cg', ansiToHtml(b.f));
+  renderSec('Critical Takeaway', 'cs', '<span class="cs">'+ansiToHtml(b.t)+'</span>');
+  renderSec('Technical Artifact', 'ct', '<span class="ct">'+ansiToHtml(b.a)+'</span>');
+  const alabel = '\u250C\u2500 ASCII Art ';
+  const adash = _W - 6 - visibleLen(alabel);
+  o += '  <span class="cg">'+alabel+'<span class="cg">'+'\u2500'.repeat(adash)+'</span>\n';
+  for (const l of b.as.split('\n')) {
+    o += '  <span class="cg">\u2502</span>'+ansiToHtml(l)+'\n';
+  }
+  o += '  <span class="cg">'+'\u2500'.repeat(_W-6)+'</span>\n\n';
+  const clabel = '\u250C\u2500 Claude Code Session ';
+  const cdash = _W - 6 - visibleLen(clabel);
+  o += '  <span class="cp">'+clabel+'<span class="cp">'+'\u2500'.repeat(cdash)+'</span>\n';
+  for (const c of b.cm) {
+    o += '  <span class="cp">\u2502</span> <span class="cp">$</span> '+ansiToHtml(c.c)+'\n';
+    for (const l of c.o) {
+      o += '  <span class="cp">\u2502</span>  '+ansiToHtml(l)+'\n';
+    }
+    o += '\n';
+  }
+  o += '  <span class="cp">'+'\u2500'.repeat(_W-6)+'</span>\n\n';
+  o += renderBotBar('b: back \u00B7 q: quit');
+  return o;
+}
+
+function render() {
+  const screen = document.getElementById('screen');
+  if (detail) {
+    screen.innerHTML = renderDetail(di);
+    document.getElementById('statusText').textContent = 'CAMBIO_SYSTEM_READY :: '+MODULES[di].id+' '+MODULES[di].n;
+    document.getElementById('navHint').textContent = 'b: back \u00B7 q: quit';
+  } else {
+    screen.innerHTML = renderList();
+    document.getElementById('statusText').textContent = 'CAMBIO_SYSTEM_READY :: MODULE BROWSER ['+MODULES[si].id+']';
+    document.getElementById('navHint').textContent = '\u2191\u2193 navigate \u00B7 \u23ce select \u00B7 b back \u00B7 /q quit';
+  }
+  document.getElementById('viewport').scrollTop = 0;
+}
+
+function handleKey(e) {
+  const key = e.key;
+  if (detail) {
+    if (key === 'b' || key === 'B' || key === 'Escape') {
+      detail = false; render(); e.preventDefault(); return;
+    }
+    if (key === 'q' || key === 'Q') { e.preventDefault(); return; }
+    return;
+  }
+  if (key === 'ArrowUp' || key === 'k' || key === 'K') {
+    si = (si - 1 + MODULES.length) % MODULES.length; render(); e.preventDefault(); return;
+  }
+  if (key === 'ArrowDown' || key === 'j' || key === 'J') {
+    si = (si + 1) % MODULES.length; render(); e.preventDefault(); return;
+  }
+  if (key === 'Enter') { di = si; detail = true; render(); e.preventDefault(); return; }
+  if (key === 'q' || key === 'Q' || key === 'Escape') { e.preventDefault(); return; }
+  if (key === 'b' || key === 'B') { e.preventDefault(); return; }
+  const term = document.getElementById('term');
+  term.classList.add('flicker');
+  setTimeout(() => term.classList.remove('flicker'), 150);
+}
+
+function handleClick(e) {
+  if (detail) return;
+  const screen = document.getElementById('screen');
+  const rect = screen.getBoundingClientRect();
+  const lineH = parseFloat(getComputedStyle(screen).lineHeight) || 18.85;
+  const lineIdx = Math.floor((e.clientY - rect.top) / lineH);
+  let curLine = 0;
+  let lw = '';
+  for (let i = 0; i < MODULES.length; i++) {
+    const b = MODULES[i];
+    if (b.w !== lw) { lw = b.w; curLine += 2; if (i === 0) curLine -= 1; }
+    if (lineIdx === curLine || lineIdx === curLine + 1) { si = i; render(); return; }
+    curLine += 2;
+    if (lineIdx < curLine) break;
+  }
+}
+
+function bootSequence() {
+  const boot = document.getElementById('boot');
+  const lines = boot.querySelectorAll('.line span');
+  let delay = 0;
+  lines.forEach((span, i) => {
+    span.style.animationDelay = (80 + i * 60) + 'ms';
+    delay = Math.max(delay, 80 + i * 60 + 300);
+  });
+  setTimeout(() => {
+    boot.classList.add('hidden');
+    document.getElementById('viewport').focus();
+    render();
+  }, Math.max(delay, 1800));
+}
+
+// Clock for cmd-meta
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = h + ':' + m;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const viewport = document.getElementById('viewport');
+  document.addEventListener('keydown', handleKey);
+  viewport.addEventListener('click', handleClick);
+  viewport.focus();
+  viewport.addEventListener('click', () => viewport.focus());
+  updateClock();
+  setInterval(updateClock, 10000);
+  bootSequence();
+});
+</script>
+</body>
+</html>

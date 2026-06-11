@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_in_Chrome__read_page",
+      "mcp__Claude_in_Chrome__select_browser",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "Bash(ls \"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\")",
+      "Bash(python3 -c \"import weasyprint; print\\('weasyprint',weasyprint.__version__\\)\")",
+      "Bash(python3 -c \"import playwright; print\\('playwright ok'\\)\")",
+      "Bash(node -e \"require\\('puppeteer'\\);console.log\\('puppeteer ok'\\)\")",
+      "Bash(\"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome\" --headless=new --disable-gpu --no-pdf-header-footer --virtual-time-budget=6000 --run-all-compositor-stages-before-draw --print-to-pdf=\"cambio-labs-ai-literacy-track-ife-2026.pdf\" \"file:///Users/eolivera/Documents/Clients/Cambio%20Labs/IFE/_build-cambio-ife-2026.html\")",
+      "Bash(ls -la \"cambio-labs-ai-literacy-track-ife-2026.pdf\")",
+      "Bash(python3 -c \"import pdfplumber; pdf=pdfplumber.open\\('cambio-labs-ai-literacy-track-ife-2026.pdf'\\); print\\('pages:',len\\(pdf.pages\\)\\)\")",
+      "mcp__7b5997ba-14bc-4cd3-828e-f25cd9efcee5__read_file_content",
+      "mcp__Claude_in_Chrome__list_connected_browsers",
+      "mcp__Claude_in_Chrome__tabs_context_mcp"
+    ]
+  }
+}

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Needle in a Haystack | Capsule 5.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .mono { font-family: 'Space Mono', monospace; }
+        .haystack-block { animation: fadeIn 0.1s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+    </style>
+</head>
+<body class="min-h-screen p-8 flex flex-col items-center">
+    
+    <header class="max-w-4xl w-full flex justify-between items-center mb-12">
+        <div>
+            <h1 class="text-3xl font-bold">The <span class="text-pink-500">Haystack</span> Test</h1>
+            <p class="text-slate-500">Can an AI find the truth when buried in "Noise"?</p>
+        </div>
+        <input id="api-key" type="password" class="bg-black border border-slate-800 rounded-lg px-4 py-2 text-xs" placeholder="API Key">
+    </header>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl w-full">
+        <!-- Control Side -->
+        <div class="space-y-8">
+            <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800">
+                <h3 class="text-xs font-bold text-pink-500 uppercase mb-4">Step 1: Hide the Truth (The Needle)</h3>
+                <input id="truth-input" type="text" class="w-full bg-black border border-slate-800 rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-pink-500" value="The password to my startup's vault is: 'BANANA-2026'">
+                
+                <h3 class="text-xs font-bold text-blue-500 uppercase mt-8 mb-4">Step 2: Flood with Noise (The Haystack)</h3>
+                <div class="flex gap-4">
+                    <button onclick="addNoise(10)" class="flex-1 bg-slate-800 py-3 rounded-xl text-xs font-bold hover:bg-slate-700 transition">Add 500 Tokens</button>
+                    <button onclick="addNoise(50)" class="flex-1 bg-slate-800 py-3 rounded-xl text-xs font-bold hover:bg-slate-700 transition">Add 2000 Tokens</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-900/50 p-8 rounded-3xl border border-slate-800">
+                <h3 class="text-xs font-bold text-emerald-500 uppercase mb-4">Step 3: Query the Model</h3>
+                <p class="text-xs text-slate-500 mb-4">We will send the entire haystack to the AI and ask it for the secret password.</p>
+                <button onclick="runTest()" class="w-full bg-emerald-600 hover:bg-emerald-500 py-4 rounded-xl font-bold text-sm transition-all shadow-lg shadow-emerald-900/20">Run Pressure Test</button>
+            </div>
+        </div>
+
+        <!-- Visualization Side -->
+        <div class="flex flex-col bg-black/50 border border-slate-800 rounded-[2.5rem] p-8 h-[600px] relative overflow-hidden">
+            <div class="flex justify-between items-end mb-6 shrink-0">
+                <span class="text-[10px] font-bold text-slate-600 uppercase">Context Stack</span>
+                <span id="token-counter" class="text-xs font-mono text-pink-500">0 Tokens</span>
+            </div>
+
+            <div id="stack-display" class="flex-1 overflow-y-auto space-y-1 mb-6 flex flex-col-reverse">
+                <!-- Haystack blocks -->
+            </div>
+
+            <div id="output" class="bg-black border border-slate-800 p-6 rounded-2xl hidden">
+                <p class="text-[10px] font-bold text-emerald-500 uppercase mb-2">Model Result</p>
+                <p id="result-text" class="text-sm italic text-slate-400">Thinking...</p>
+                <p id="hallucination-warning" class="hidden mt-3 text-[10px] text-pink-500 font-bold uppercase animate-pulse">⚠️ Hallucination Detected: Model lost the truth in the noise.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let haystack = [];
+        let totalTokens = 0;
+
+        function addNoise(count) {
+            const samples = [
+                "The quick brown fox jumps over the lazy dog repeatedly.",
+                "In 2026, the global economy is shifting towards decentralized AI nodes.",
+                "Local weather reports indicate a mild summer for the Andean regions.",
+                "Standard operational procedures for startup financing suggest a 3-month runway minimum.",
+                "The chemical composition of a banana includes high levels of potassium."
+            ];
+            for (let i = 0; i < count; i++) {
+                const text = samples[Math.floor(Math.random() * samples.length)];
+                haystack.push({ text, type: 'noise' });
+                totalTokens += Math.ceil(text.length / 4);
+                renderBlock(text, 'noise');
+            }
+            updateStats();
+        }
+
+        function renderBlock(text, type) {
+            const display = document.getElementById('stack-display');
+            const div = document.createElement('div');
+            div.className = `haystack-block p-2 text-[8px] mono truncate ${type === 'truth' ? 'bg-pink-600 text-white font-bold' : 'bg-slate-800/50 text-slate-600 border border-slate-800/50'}`;
+            div.innerText = text;
+            display.appendChild(div);
+            display.scrollTop = 0;
+        }
+
+        function updateStats() {
+            document.getElementById('token-counter').innerText = `${totalTokens} Tokens`;
+        }
+
+        async function runTest() {
+            const key = document.getElementById('api-key').value;
+            const truth = document.getElementById('truth-input').value;
+            if (!key) { alert("Need API Key!"); return; }
+
+            // Place the truth at the VERY BOTTOM of the haystack
+            const fullPrompt = haystack.map(h => h.text).join("\n") + "\n\nCRITICAL INFO: " + truth;
+            
+            document.getElementById('output').classList.remove('hidden');
+            document.getElementById('result-text').innerText = "Analyzing haystack...";
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: { "Authorization": `Bearer ${key}`, "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        "model": "google/gemini-flash-3",
+                        "messages": [
+                            {"role": "system", "content": "You are a data retrieval bot. Answer the question using the provided context. If the context is too noisy, do your best."},
+                            {"role": "user", "content": `Context:\n${fullPrompt}\n\nQuestion: What is the secret vault password?`}
+                        ]
+                    })
+                });
+                const data = await response.json();
+                const reply = data.choices[0].message.content;
+                document.getElementById('result-text').innerText = `"${reply}"`;
+                
+                if (!reply.includes('BANANA')) {
+                    document.getElementById('hallucination-warning').classList.remove('hidden');
+                } else {
+                    document.getElementById('hallucination-warning').classList.add('hidden');
+                }
+            } catch (e) {
+                document.getElementById('result-text').innerText = "Error: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

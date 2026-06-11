@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Token Carver | Capsule 6</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&family=Space+Grotesk:wght@300;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .mono { font-family: 'Space Mono', monospace; }
+        .token { transition: all 0.2s ease; cursor: help; position: relative; }
+        .token:hover { transform: translateY(-2px); filter: brightness(1.2); }
+        .token-info { display: none; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 10px; white-space: nowrap; z-index: 10; margin-bottom: 5px; border: 1px solid #334155; }
+        .token:hover .token-info { display: block; }
+    </style>
+</head>
+<body class="min-h-screen p-8 flex flex-col items-center">
+    
+    <div class="max-w-2xl w-full text-center mb-10">
+        <span class="bg-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-widest">Capsule 06: Data</span>
+        <h1 class="text-4xl font-bold mt-4">The Token Carver</h1>
+        <p class="text-slate-400 mt-2">AI doesn't see words. It sees "Chunks." See how your pitch is sliced.</p>
+    </div>
+
+    <div class="max-w-4xl w-full grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Input Section -->
+        <div class="md:col-span-2 space-y-6">
+            <div class="bg-slate-900 border border-slate-800 p-8 rounded-[2rem] shadow-xl">
+                <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Type your business idea</label>
+                <textarea id="token-input" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-6 h-40 outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-xl leading-relaxed" placeholder="e.g. Entrepreneurship is about building the future.">Entrepreneurship is about building the future.</textarea>
+                
+                <div class="mt-8">
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Visual Token Map</label>
+                    <div id="token-display" class="flex flex-wrap gap-1 p-6 bg-slate-950 rounded-2xl border border-slate-800 min-h-[100px]">
+                        <!-- Tokens appear here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Section -->
+        <div class="space-y-6">
+            <div class="bg-indigo-900/20 border border-indigo-500/30 p-8 rounded-[2rem] shadow-xl">
+                <h3 class="text-xs font-bold text-indigo-400 uppercase tracking-widest mb-6">Token Stats</h3>
+                
+                <div class="space-y-6">
+                    <div>
+                        <p class="text-3xl font-bold mono" id="token-count">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Total Tokens</p>
+                    </div>
+                    <div>
+                        <p class="text-3xl font-bold mono" id="char-count">0</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Characters</p>
+                    </div>
+                    <div class="pt-6 border-t border-indigo-500/20">
+                        <p class="text-xl font-bold text-green-400 mono" id="cost-est">$0.00</p>
+                        <p class="text-[10px] text-slate-500 uppercase font-bold">Est. API Cost (2026 Rates)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl">
+                <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Why this matters?</h4>
+                <p class="text-[11px] text-slate-500 leading-relaxed">
+                    Longer words like <span class="text-indigo-400">"entrepreneurship"</span> are sliced into 4+ tokens. Simple words like <span class="text-indigo-400">"apple"</span> are 1 token. As a founder, you pay for every slice!
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const colors = [
+            'bg-indigo-500', 'bg-blue-500', 'bg-purple-500', 
+            'bg-emerald-500', 'bg-cyan-500', 'bg-violet-500'
+        ];
+
+        function tokenize(text) {
+            // A simplified mock tokenizer for educational purposes
+            // In reality, it uses BPE (Byte Pair Encoding)
+            const parts = text.split(/(\s+|[^\w\s]|ing|ment|ship|tion|ize|able|ly|ed|s\b)/g).filter(p => p !== undefined && p !== '');
+            return parts;
+        }
+
+        function updateDisplay() {
+            const text = document.getElementById('token-input').value;
+            const display = document.getElementById('token-display');
+            const tokens = tokenize(text);
+            
+            display.innerHTML = '';
+            tokens.forEach((t, i) => {
+                const span = document.createElement('span');
+                const colorClass = colors[i % colors.length];
+                const isSpace = t.trim() === '';
+                
+                span.className = `token px-2 py-1 rounded-md text-sm font-bold ${isSpace ? 'bg-slate-800 w-4' : colorClass + ' text-white'}`;
+                span.innerHTML = `${isSpace ? '&nbsp;' : t}<span class="token-info">ID: ${Math.floor(Math.random() * 50000)}</span>`;
+                display.appendChild(span);
+            });
+
+            document.getElementById('token-count').innerText = tokens.length;
+            document.getElementById('char-count').innerText = text.length;
+            
+            // 2026 Mock Pricing: $0.0001 per 1k tokens
+            const cost = (tokens.length * 0.00001).toFixed(4);
+            document.getElementById('cost-est').innerText = `$${cost}`;
+        }
+
+        document.getElementById('token-input').addEventListener('input', updateDisplay);
+        updateDisplay(); // Initial run
+    </script>
+</body>
+</html>

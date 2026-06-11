@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Swapper | Capsule 09</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&family=Space+Grotesk:wght@300;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .mono { font-family: 'Fira Code', monospace; }
+        .agent-msg { border-left: 2px solid #3b82f6; background: rgba(59, 130, 246, 0.05); }
+        .command-hint { color: #10b981; font-weight: bold; }
+        .model-badge { transition: all 0.3s ease; }
+        .settings-panel { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .settings-open .settings-panel { transform: translateX(0); }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden">
+
+    <!-- API Settings -->
+    <div id="settings-root" class="fixed inset-y-0 right-0 w-80 bg-slate-900 border-l border-slate-800 z-50 settings-panel p-8 shadow-2xl">
+        <h3 class="text-sm font-bold uppercase tracking-widest text-blue-500 mb-6">Neural Link Configuration</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">OpenRouter API Key</label>
+                <input id="api-key" type="password" class="w-full bg-black border border-slate-700 rounded-lg px-3 py-2 mt-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="sk-or-v1-...">
+            </div>
+            <p class="text-[10px] text-slate-500 leading-relaxed italic">Your key is stored locally in your browser session only.</p>
+            <button onclick="toggleSettings()" class="w-full mt-4 bg-blue-600 py-2 rounded-lg text-xs font-bold hover:bg-blue-500 transition">Save & Start Session</button>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-950 border-b border-slate-900 px-6 py-4 flex justify-between items-center shrink-0">
+        <div class="flex items-center gap-4">
+            <span class="bg-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Capsule 09: Orchestration</span>
+            <h1 class="text-xl font-bold tracking-tight">Neural <span class="text-blue-500">Swapper</span></h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div id="active-model-display" class="flex items-center gap-2 bg-slate-900 px-3 py-1.5 rounded-lg border border-slate-800">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span class="text-[10px] font-mono text-slate-300" id="current-model-id">gpt-4o-mini</span>
+            </div>
+            <button onclick="toggleSettings()" class="text-slate-500 hover:text-white transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Console -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-black/20">
+        <div id="chat-history" class="flex-1 overflow-y-auto p-6 space-y-6">
+            <!-- Messages -->
+            <div class="agent-msg p-6 rounded-2xl border border-slate-800">
+                <p class="text-xs font-bold text-blue-500 uppercase mb-2">Neural Agent</p>
+                <p class="text-sm text-slate-300 leading-relaxed">
+                    System initialized. I am currently running on <code class="bg-slate-800 px-1 rounded">gpt-4o-mini</code>. 
+                    <br><br>
+                    You can swap my "brain" at any time by using the <span class="command-hint">/model</span> command. Try these:
+                    <ul class="mt-3 space-y-1 text-xs text-slate-500 mono">
+                        <li>/model claude-3-sonnet</li>
+                        <li>/model llama-3-8b</li>
+                        <li>/model gpt-4o</li>
+                    </ul>
+                </p>
+            </div>
+        </div>
+
+        <!-- Input Area -->
+        <div class="p-6 bg-slate-950 border-t border-slate-900 shrink-0">
+            <div class="max-w-4xl mx-auto relative">
+                <input id="user-input" type="text" 
+                    class="w-full bg-slate-900 border border-slate-800 rounded-2xl pl-6 pr-24 py-4 outline-none focus:ring-2 focus:ring-blue-500 transition-all text-sm mono" 
+                    placeholder="Type a message or /model command...">
+                <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-2">
+                    <button onclick="handleInput()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded-xl text-xs font-bold transition-all active:scale-95">Execute</button>
+                </div>
+            </div>
+            <p class="text-[10px] text-slate-600 mt-3 text-center uppercase tracking-widest font-bold">Press Enter to Send</p>
+        </div>
+    </main>
+
+    <script>
+        let currentModel = "openai/gpt-4o-mini";
+        const chatHistory = document.getElementById('chat-history');
+        const userInput = document.getElementById('user-input');
+
+        const modelShortcuts = {
+            'claude-3-sonnet': 'anthropic/claude-3.5-sonnet',
+            'llama-3-8b': 'meta-llama/llama-3.1-8b-instruct:free',
+            'gpt-4o': 'openai/gpt-4o',
+            'gpt-4o-mini': 'openai/gpt-4o-mini'
+        };
+
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleInput();
+        });
+
+        function toggleSettings() {
+            document.body.classList.toggle('settings-open');
+        }
+
+        function appendMessage(role, text, isCommand = false) {
+            const div = document.createElement('div');
+            if (isCommand) {
+                div.className = "flex justify-center";
+                div.innerHTML = `<span class="bg-slate-800/50 text-[10px] font-mono text-slate-500 px-3 py-1 rounded-full border border-slate-800">${text}</span>`;
+            } else {
+                const isAgent = role === 'agent';
+                div.className = `${isAgent ? 'agent-msg' : 'bg-slate-900/30'} p-6 rounded-2xl border border-slate-800`;
+                div.innerHTML = `
+                    <p class="text-xs font-bold ${isAgent ? 'text-blue-500' : 'text-emerald-500'} uppercase mb-2">${isAgent ? 'Neural Agent' : 'You'}</p>
+                    <p class="text-sm text-slate-300 leading-relaxed">${text}</p>
+                `;
+            }
+            chatHistory.appendChild(div);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+        }
+
+        async function handleInput() {
+            const text = userInput.value.trim();
+            if (!text) return;
+            userInput.value = '';
+
+            // Handle Commands
+            if (text.startsWith('/model')) {
+                const parts = text.split(' ');
+                const requested = parts[1];
+                if (requested) {
+                    const fullId = modelShortcuts[requested] || requested;
+                    currentModel = fullId;
+                    document.getElementById('current-model-id').innerText = requested;
+                    appendMessage(null, `MODEL_SWAP: Switched to ${fullId}`, true);
+                }
+                return;
+            }
+
+            // Normal Message
+            appendMessage('user', text);
+            await callAI(text);
+        }
+
+        async function callAI(text) {
+            const key = document.getElementById('api-key').value;
+            if (!key) {
+                appendMessage('agent', "⚠️ Error: API Key not found. Please click the settings icon in the top right to configure your Neural Link.");
+                return;
+            }
+
+            const loadingId = Date.now();
+            appendMessage('agent', `<span id="loading-${loadingId}" class="animate-pulse">Reasoning with ${currentModel}...</span>`);
+
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${key}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        "model": currentModel,
+                        "messages": [{"role": "user", "content": text}]
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+                
+                // Replace loading text
+                document.getElementById(`loading-${loadingId}`).parentElement.innerHTML = content;
+
+            } catch (error) {
+                document.getElementById(`loading-${loadingId}`).innerText = `API Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

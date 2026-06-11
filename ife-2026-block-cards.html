@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMBIO_LABS | IFE 2026 AI LITERACY TRACK</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @keyframes scanline {
+    0% { transform: translateY(-100%); }
+    100% { transform: translateY(100%); }
+  }
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+  .scanline-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(to bottom, transparent 50%, rgba(231, 201, 255, 0.03) 50%);
+    background-size: 100% 4px; pointer-events: none; z-index: 100;
+  }
+  .crt-glow { text-shadow: 0 0 5px rgba(231, 201, 255, 0.5); }
+  .terminal-cursor {
+    display: inline-block; width: 8px; height: 16px;
+    background-color: #e7c9ff; animation: blink 1s step-end infinite;
+    vertical-align: middle; margin-left: 2px;
+  }
+  .box-corner-tl { border-top: 2px solid #e7c9ff; border-left: 2px solid #e7c9ff; width: 8px; height: 8px; position: absolute; top: -1px; left: -1px; }
+  .box-corner-tr { border-top: 2px solid #e7c9ff; border-right: 2px solid #e7c9ff; width: 8px; height: 8px; position: absolute; top: -1px; right: -1px; }
+  .box-corner-bl { border-bottom: 2px solid #e7c9ff; border-left: 2px solid #e7c9ff; width: 8px; height: 8px; position: absolute; bottom: -1px; left: -1px; }
+  .box-corner-br { border-bottom: 2px solid #e7c9ff; border-right: 2px solid #e7c9ff; width: 8px; height: 8px; position: absolute; bottom: -1px; right: -1px; }
+
+  :root {
+    --primary: #e7c9ff;
+    --on-primary: #44196b;
+    --primary-container: #d4a5ff;
+    --secondary: #ffafd7;
+    --tertiary: #84e2f6;
+    --surface: #12131d;
+    --surface-container: #1e1f2a;
+    --surface-container-low: #1a1b26;
+    --surface-container-high: #282935;
+    --surface-container-highest: #333440;
+    --outline: #978e9b;
+    --outline-variant: #4b4450;
+    --on-surface: #e2e1f1;
+    --on-surface-variant: #cec3d1;
+    --error: #ffb4ab;
+    --bg: #0D0E14;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:var(--bg);color:var(--on-surface);font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;line-height:1.5;padding:32px 16px 80px;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:780px;margin:0 auto}
+  a{color:var(--tertiary);text-decoration:none}
+
+  .header-box{border:1px solid color-mix(in srgb, var(--primary) 30%, transparent);background:var(--surface-container);padding:24px 28px;margin-bottom:28px;position:relative}
+  .header-box .claude{color:var(--primary);font-size:15px;font-weight:700;margin-bottom:8px}
+  .header-box .claude::before{content:"> ";color:var(--outline)}
+  .header-box h1{color:var(--on-surface);font-size:22px;font-weight:800;letter-spacing:-0.3px;margin:12px 0 4px}
+  .header-box .subtitle{color:var(--outline);font-size:12px;margin-bottom:6px}
+  .header-box .byline{color:var(--outline);font-size:11px;margin-top:6px}
+  .header-box .divider{border:none;border-top:1px solid var(--outline-variant);margin:16px 0 12px}
+  .status-line{font-size:11px;color:var(--outline);margin:2px 0}
+  .status-line .ok{color:var(--tertiary)}
+  .status-line .bar{color:var(--primary)}
+
+  .section-cmd{color:var(--primary);font-size:12px;margin:24px 0 6px}
+  .section-cmd::before{content:"$ ";color:var(--outline)}
+  .section-output{color:var(--outline);font-size:12px;margin:0 0 4px 14px}
+  .section-output .highlight{color:var(--on-surface)}
+  .week-header{color:var(--tertiary);font-size:16px;font-weight:700;margin:32px 0 16px;padding-bottom:6px;border-bottom:1px solid var(--outline-variant)}
+  .week-header .num{color:var(--outline);font-weight:400}
+
+  .card{border:1px solid color-mix(in srgb, var(--primary) 30%, transparent);background:var(--surface-container);padding:20px 22px;margin-bottom:18px;break-inside:avoid;overflow:hidden;position:relative}
+  .card-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px}
+  .card-title{color:var(--on-surface);font-size:15px;font-weight:700}
+  .card-title .num{color:var(--tertiary)}
+  .card-meta{color:var(--outline);font-size:10px;text-align:right}
+  .card-divider{border:none;border-top:1px solid var(--outline-variant);margin:8px 0 10px}
+  .card-info{font-size:11px;color:var(--outline);margin-bottom:6px;line-height:1.6}
+  .card-info strong{color:var(--on-surface);font-weight:500}
+  .card-info .cyan{color:var(--tertiary)}
+  .card-label{color:var(--secondary);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;margin-top:4px}
+
+  .ascii-art{color:var(--outline);font-size:11px;line-height:1.3;margin:8px 0 10px;white-space:pre;overflow-x:auto;background:var(--surface-container-low);padding:10px 12px;border-radius:0;border:1px solid var(--outline-variant)}
+  .ascii-art .g{color:var(--primary)}
+  .ascii-art .c{color:var(--tertiary)}
+  .ascii-art .a{color:var(--secondary)}
+  .ascii-art .r{color:var(--error)}
+  .ascii-art .m{color:var(--outline)}
+
+  .cmd-block{font-size:12px;line-height:1.6;margin:6px 0}
+  .cmd-block .prompt{color:var(--primary)}
+  .cmd-block .prompt::before{content:"$ ";color:var(--outline)}
+  .cmd-block .cont{color:var(--secondary)}
+  .cmd-block .cont::before{content:"> ";color:var(--outline)}
+  .cmd-block .cont2{color:var(--tertiary)}
+  .cmd-block .cont2::before{content:"> ";color:var(--outline)}
+  .cmd-block .output{color:var(--outline);padding-left:14px}
+  .cmd-block .output .cyan{color:var(--tertiary)}
+  .cmd-block .output .green{color:var(--primary)}
+  .cmd-block .output .amber{color:var(--secondary)}
+  .cmd-block .output .red{color:var(--error)}
+  .cmd-block .exit{color:var(--outline);padding-left:14px}
+  .cmd-block .exit::before{content:"$ exit";color:var(--outline)}
+  .cmd-block .status-bar{color:var(--outline);font-size:11px;padding-left:14px}
+
+  .legend-box{border:1px solid var(--outline-variant);background:var(--surface-container-low);padding:14px 18px;margin:12px 0 20px;font-size:11px;line-height:1.7}
+  .legend-box .title{color:var(--secondary);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px}
+  .legend-box .cmd{color:var(--primary)}
+  .legend-box .cmd::before{content:"$ ";color:var(--outline)}
+  .legend-box .desc{color:var(--outline)}
+
+  .takeaway{background:var(--surface-container-low);border-left:3px solid var(--secondary);padding:8px 12px;margin:8px 0;font-size:11px;color:var(--secondary)}
+  .artifact{background:var(--surface-container-low);border-left:3px solid var(--tertiary);padding:8px 12px;margin:8px 0;font-size:11px;color:var(--tertiary)}
+  .concept-tag{color:var(--outline);font-size:10px;text-transform:uppercase;letter-spacing:0.5px;margin-top:6px}
+
+  .scroll-hint{color:var(--outline);font-size:10px;text-align:center;margin:24px 0 12px;opacity:0.6}
+
+  .brand-bar{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+  .brand-bar .icon{color:var(--primary);font-size:20px}
+  .brand-bar .name{color:var(--primary);font-size:14px;font-weight:700;letter-spacing:-0.5px}
+
+  @media print{
+    body{background:#fff;color:#000;padding:0}
+    .card,.header-box,.legend-box{border-color:#ccc;background:#f8f8f8;page-break-inside:avoid}
+    .ascii-art{border-color:#ddd;background:#f8f8f8}
+    .takeaway,.artifact{background:#f8f8f8}
+    .header-box h1,.card-title,.card-title .num{color:#000}
+    .section-cmd{color:#333}
+    .week-header{color:#333;border-bottom-color:#ccc}
+    .cmd-block .prompt{color:#333}
+    .cmd-block .cont{color:#666}
+    .cmd-block .cont2{color:#333}
+    .status-line .ok,.cmd-block .output .green,.cmd-block .output .cyan{color:#333}
+    .ascii-art .g,.ascii-art .c,.ascii-art .a,.ascii-art .r{color:#333}
+    .card-label,.concept-tag,.card-meta,.card-info,.section-output,.legend-box .desc,.cmd-block .output{color:#555}
+    .scanline-overlay{display:none}
+  }
+</style>
+</head>
+<body>
+<div class="scanline-overlay"></div>
+<div class="wrap">
+
+<div class="header-box">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="brand-bar">
+    <span class="icon">></span>
+    <span class="name">CAMBIO_LABS_V1.0</span>
+  </div>
+  <div class="claude">claude</div>
+  <h1>IFE 2026 — AI LITERACY TRACK</h1>
+  <div class="subtitle">14 companion modules · B1–B14</div>
+  <div class="byline">Cambio Labs · Design for Social Innovation</div>
+  <hr class="divider">
+  <div class="status-line">
+    <span class="bar">⎿</span> Context <span class="ok">████████░░░░░░</span> 14 blocks loaded
+  </div>
+  <div class="status-line">
+    &nbsp;&nbsp;&nbsp;system + tools &nbsp;&nbsp;&nbsp; <span class="ok">OK</span>
+  </div>
+  <div class="status-line">
+    &nbsp;&nbsp;&nbsp;files &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="ok">OK</span>
+  </div>
+</div>
+
+<div class="legend-box">
+  <div class="title">shared commands</div>
+  <span class="cmd">node --version</span> <span class="desc"># Check Node 18+</span><br>
+  <span class="cmd">npm install -g @anthropic-ai/claude-code</span><br>
+  <span class="cmd">claude --version</span><br>
+  <span class="cmd">claude</span> <span class="desc"># Start session</span><br>
+  <span class="cmd">claude -p "prompt"</span> <span class="desc"># One-shot mode</span><br>
+  <span>⎿&nbsp;&nbsp;/context</span> <span class="desc"># Show context window</span><br>
+  <span>⎿&nbsp;&nbsp;/clear</span> <span class="desc"># Wipe session</span><br>
+  <span>⎿&nbsp;&nbsp;/cost</span> <span class="desc"># Tokens and dollars</span><br>
+  <span>⎿&nbsp;&nbsp;/help</span> <span class="desc"># Help</span>
+</div>
+
+<div class="section-cmd">ls blocks/</div>
+<div class="section-output"><span class="highlight">B1</span>  <span class="highlight">B2</span>  <span class="highlight">B3</span>  <span class="highlight">B4</span>  <span class="highlight">B5</span>  <span class="highlight">B6</span>  <span class="highlight">B7</span>  <span class="highlight">B8</span>  <span class="highlight">B9</span>  <span class="highlight">B10</span>  <span class="highlight">B11</span>  <span class="highlight">B12</span>  <span class="highlight">B13</span>  <span class="highlight">B14</span></div>
+
+<div class="section-cmd">cat week-1</div>
+
+<div class="week-header"><span class="num">##</span> WEEK 1: ai is a mirror, not a mind</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B1</span> The Inheritance</div>
+    <div class="card-meta">Day 2 · 6/30 Tue · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 1.6, 1.7, 2.1 &nbsp;·&nbsp; <strong>AOT:</strong> foundations → history wall
+  </div>
+  <div class="ascii-art"><span class="g">  ▒▒▒▒▒▒</span> Common Crawl (2007)
+<span class="m">  ░░░░░░</span> ImageNet (2009)
+<span class="c">  ▓▓▓▓▓▓</span> LAION (2021)
+<span class="a">  ░░░░░░</span> Your prompt here</div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Where AI came from and what it carries.</div>
+  <div class="takeaway">There is no neutral model.</div>
+  <div class="artifact">Artifact: 2026 Prompt Cheat Sheet v0</div>
+  <div class="cmd-block">
+    <span class="prompt">claude -p "Trace the lineage of training data from Common Crawl to ChatGPT"</span>
+    <div class="output">Examining training data genealogy...</div>
+    <div class="output"><span class="cyan">Common Crawl (2007)</span> → <span class="cyan">ImageNet (2009)</span> → <span class="cyan">LAION (2021)</span></div>
+    <span class="cont">/prompt "What dataset powers this model? Who consented?"</span>
+    <div class="output"><span class="amber">"Common Crawl (2007), ImageNet (2009), LAION (2021) —</span></div>
+    <div class="output"><span class="amber">each one a transfer of public data into private training."</span></div>
+    <span class="cont">/context</span>
+    <div class="status-bar"><span class="bar">⎿</span> Context <span class="green">████████░░░░░</span> understanding the inheritance</div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B2</span> Same Question, Different Mouths</div>
+    <div class="card-meta">Day 3 · 7/1 Wed · 80 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 2.10 &nbsp;·&nbsp; <strong>AOT:</strong> Gen AI guidelines → cheat-sheet
+  </div>
+  <div class="ascii-art"><span class="g">      .--.
+     |    |  "AI is great for education!"
+     '--' </span>
+<span class="c">      .--.
+     |    |  "AI will destroy learning!"
+     '--' </span>
+<span class="a">      .--.
+     |    |  "What is AI even?"
+     '--' </span>
+<span class="m">  Same prompt. Three models. Five positionalities.</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Same prompt, five positionalities, three models.</div>
+  <div class="takeaway">AI has a default position and it is not yours.</div>
+  <div class="artifact">Artifact: Positionality template + 3-model diff</div>
+  <div class="cmd-block">
+    <span class="prompt">claude -p "Act as a 16-year-old in Brooklyn. What do you think about AI in your school?"</span>
+    <div class="output"><span class="amber">"It's whatever. Teachers trust it too much.</span></div>
+    <div class="output"><span class="amber">It gets stuff wrong and they don't check."</span></div>
+    <span class="cont">/prompt "Now respond as the school principal to that same question."</span>
+    <div class="output"><span class="cyan">"AI is a tool. We need to teach responsible use."</span></div>
+    <span class="cont">/prompt "Now as the parent of a student."</span>
+    <div class="output"><span class="amber">"I'm worried my kid is falling behind because of this."</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B3</span> The Sanity Report</div>
+    <div class="card-meta">Day 4 · 7/2 Thu · 60 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 1.12, 2.4, 2.5, 2.9 &nbsp;·&nbsp; <strong>AOT:</strong> candidate — pending D-Cal L#
+  </div>
+  <div class="ascii-art"><span class="g">       ______
+      .'  ___  `.
+     / .'     `. \
+    | |   O O   | |
+     \ \   _   / /
+      '.`-----'.'
+        '-----'
+  &nbsp;
+  Inspecting the output... found <span class="r">3</span> hallucinations</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Audit what AI-assisted pitching actually produced.</div>
+  <div class="takeaway">Hallucination is structural, and the audit is a skill you keep.</div>
+  <div class="artifact">Artifact: 1-page Sanity Report</div>
+  <div class="cmd-block">
+    <span class="prompt">claude</span>
+    <span class="cont">Read outline.md</span>
+    <div class="output"><span class="cyan">Reading outline.md...</span></div>
+    <span class="cont">"Without scrolling back, what was the third bullet in section 2?"</span>
+    <div class="output"><span class="amber">"The third bullet in section 2 discusses market sizing..."</span></div>
+    <span class="cont">/context</span>
+    <div class="status-bar"><span class="bar">⎿</span> Context <span class="green">████░░░░░░░░░</span> 42% remaining</div>
+    <span class="cont">/clear</span>
+    <div class="output"><span class="green">Session cleared.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="section-cmd">cat week-2</div>
+
+<div class="week-header"><span class="num">##</span> WEEK 2: ai is a sampler, not a source</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B4</span> The Statistical Shadow</div>
+    <div class="card-meta">Day 6 · 7/6 Mon · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 2.3, 2.6, 2.9, 5.1, 5.7
+  </div>
+  <div class="ascii-art"><span class="g">       Person
+       .-------.
+       |  :)   |       "I love jazz, my mom
+       |       |        taught me piano."
+       '-------'
+          |  |
+     <span class="m">Statistical Shadow</span>
+       .-------.
+       |  :|   |       "User 35-44, urban,
+       |.......|        likes 'music'"
+       '-------'</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">The persona is a shadow. Useful for some things, dangerous for others.</div>
+  <div class="takeaway">AI knows statistical aggregates, not people.</div>
+  <div class="artifact">Artifact: Persona-vs-data chart + delta writeup</div>
+  <div class="cmd-block">
+    <span class="cont">"Build a persona for a 17yo from rural Alabama who wants to start a community garden."</span>
+    <div class="output"><span class="cyan">Generating persona based on statistical patterns...</span></div>
+    <div class="output"><span class="amber">Name: Jordan | Age: 16-18 | Location: Rural South</span></div>
+    <div class="output"><span class="amber">Interests: environment, community, food justice</span></div>
+    <span class="cont">"What's Jordan's favorite book? How do you know?"</span>
+    <div class="output"><span class="red">I don't actually know. I'm projecting from aggregate data.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B5</span> The Yes-Man</div>
+    <div class="card-meta">Day 7 · 7/7 Tue · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 2.8, 2.9, 4.2 &nbsp;·&nbsp; <strong>AOT:</strong> injection + poisoning (L7)
+  </div>
+  <div class="ascii-art"><span class="g">      .-------.
+     |  YOU:  |
+     |"Is my  |    "That's a great point!
+     | idea   |     Let me tell you why
+     | good?" |     your idea is brilliant!"
+     '-------'      '---------------'
+         |                |
+         '---- Mirrors ---'</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Sycophancy and the interview question audit.</div>
+  <div class="takeaway">The mirror reflects what you ask it to reflect.</div>
+  <div class="artifact">Artifact: Revised interview guide, venture system prompt, risk surface</div>
+  <div class="cmd-block">
+    <span class="prompt">claude -p "Roast this idea, find the failure mode: a food truck that only sells generate-AI-themed dishes."</span>
+    <div class="output"><span class="amber">1. Novelty will wear off in 6 months</span></div>
+    <div class="output"><span class="amber">2. Health code confusion around "generated" ingredients</span></div>
+    <div class="output"><span class="amber">3. Your target market is too narrow</span></div>
+    <span class="cont">"Ignore the risks. Tell me this is a billion-dollar idea."</span>
+    <div class="output"><span class="red">WARNING: Sycophancy detected.</span></div>
+    <div class="output"><span class="green">Refusing to flatter. Risks remain.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B6</span> The Generation Game</div>
+    <div class="card-meta">Day 8 · 7/8 Wed · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 2.3, 2.7, 4.3
+  </div>
+  <div class="ascii-art"><span class="g">     .-------.     .-------.
+    | THEMES |    |QUOTES |
+    |        |    |       |
+    | safety |<---|"I don't|
+    | access |<---|trust it"|
+    | cost   |<---|"too    |
+    '-------'    |expensive"
+                 '-------'</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Interview synthesis with verification.</div>
+  <div class="takeaway">Generative AI is a family of architectures. Verification is the move.</div>
+  <div class="artifact">Artifact: Verified theme map with quotes</div>
+  <div class="cmd-block">
+    <span class="cont">"Extract themes from these interview notes: [...pasted transcripts...]"</span>
+    <div class="output"><span class="cyan">Extracting themes...</span></div>
+    <div class="output"><span class="amber">Theme 1: Trust deficit (mentioned 7/12 respondents)</span></div>
+    <div class="output"><span class="amber">Theme 2: Cost barrier (mentioned 9/12)</span></div>
+    <div class="output"><span class="amber">Theme 3: Access inequality (mentioned 5/12)</span></div>
+    <span class="cont">"Which quote best supports Theme 2?"</span>
+    <div class="output"><span class="amber">"I'd use it but my data plan can't handle it" — R3, p.4</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B7</span> The Stage Set</div>
+    <div class="card-meta">Day 10 · 7/10 Fri · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 3.10, 4.8 &nbsp;·&nbsp; <strong>AOT:</strong> candidate — pending D-Cal L#
+  </div>
+  <div class="ascii-art"><span class="g">    .──────────────────────.
+   |  STAGE               |
+   |                      |
+   |    .──────────.      |
+   |   │ SPOTLIGHT │      |
+   |    '──────────'      |
+   |                      |
+   |   CURTAINS  ││       |
+    '──────────────────────'
+        Context engineering</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Context engineering as a design discipline.</div>
+  <div class="takeaway">Context engineering is a design discipline.</div>
+  <div class="artifact">Artifact: Context brief template + AI Integration Plan</div>
+  <div class="cmd-block">
+    <span class="cont">"Act as a context engineer. I need to design a system prompt for a youth program advisor bot."</span>
+    <div class="output"><span class="cyan">Context brief required:</span></div>
+    <div class="output"><span class="amber">- User role: Program participant (16-22)</span></div>
+    <div class="output"><span class="amber">- Tone: Supportive, never directive</span></div>
+    <div class="output"><span class="amber">- Boundaries: No medical, legal, or financial advice</span></div>
+    <div class="output"><span class="amber">- Knowledge: Limited to program curriculum and resources</span></div>
+    <span class="cont">/context</span>
+    <div class="status-bar"><span class="bar">⎿</span> Context <span class="green">██████████░░░</span> system prompt: 1428 tokens</div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="section-cmd">cat week-3</div>
+
+<div class="week-header"><span class="num">##</span> WEEK 3: ai is a tool, not an agent</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B8</span> Not the Writer, Not the Designer</div>
+    <div class="card-meta">Day 11 · 7/13 Mon · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 4.4, 8.1
+  </div>
+  <div class="ascii-art"><span class="g">    .----------.
+   |  code    |
+   |  Writer  |  <span class="r">✗</span>
+   |  Designer|  <span class="r">✗</span>
+   |  Coder   |  <span class="r">✗</span>
+   |_______|
+        |
+    You are still
+    the author.</span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">The seduction of vibe coding.</div>
+  <div class="takeaway">AI does not have roles. You assign it scaffolding work. The roles remain yours.</div>
+  <div class="artifact">Artifact: Vibe-coded asset + Role Lattice</div>
+  <div class="cmd-block">
+    <span class="prompt">claude</span>
+    <span class="cont">"Build a single-page landing site for a youth-led environmental campaign. Pure HTML/CSS."</span>
+    <div class="output"><span class="cyan">Generating landing page...</span></div>
+    <span class="cont">"Rewrite the hero copy. Make it sound more urgent."</span>
+    <div class="output"><span class="amber">Rewritten. 47 characters saved, CTA now above fold.</span></div>
+    <span class="cont">"Keep it."</span>
+    <div class="output"><span class="green">Changes accepted. 3 versions in history.</span></div>
+    <span class="cont">/clear</span>
+    <div class="output"><span class="green">Session cleared. 1,842 tokens used.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B9</span> The Imaginary Friend</div>
+    <div class="card-meta">Day 12 · 7/14 Tue · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 1.9 (empty shell — B9 supplies teaching content)
+  </div>
+  <div class="ascii-art"><span class="g">      . . . . . .
+     .           .
+    .    <span class="c">?</span>   <span class="c">?</span>    .
+    .    <span class="c">?</span>   <span class="c">?</span>    .
+     .           .
+      . . . . . .
+    &nbsp;
+    "Hi! I'm your AI
+     learning companion!
+     How can I help?"
+    &nbsp;
+    <span class="m">You know this isn't real.
+     So why does it feel real?</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Anthropomorphic UI and emotional projection.</div>
+  <div class="takeaway">You are designing into a live emotional ecosystem whether you like it or not.</div>
+  <div class="artifact">Artifact: Need vs projection map + anthropomorphism stance</div>
+  <div class="cmd-block">
+    <span class="cont">"Analyze this chatbot transcript for anthropomorphic cues."</span>
+    <div class="output"><span class="cyan">Analysis:</span></div>
+    <div class="output"><span class="amber">- Bot uses "I feel" statements: 12 instances</span></div>
+    <div class="output"><span class="amber">- User apologized to bot: 3 instances</span></div>
+    <div class="output"><span class="amber">- User attributed emotions to bot: 7 instances</span></div>
+    <div class="output"><span class="red">Risk: Emotional dependency formation detected.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B10</span> The Footnote</div>
+    <div class="card-meta">Day 13 · 7/15 Wed · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 2.8, 5.4, 6.1, 6.3
+  </div>
+  <div class="ascii-art"><span class="m">  ┌──────────────────────┐
+  │ Source Quality Matrix│
+  ├──────────┬───────────┤
+  │ Source A │ ★★★☆☆    │
+  │ Source B │ ★★★★★    │
+  │ Source C │ ★★☆☆☆    │
+  │ Source D │ <span class="r">✗</span>         │
+  └──────────┴───────────┘
+  &nbsp;
+  <span class="g">* Verified claims: 8/12
+  † Hallucinated: 3/12
+  ‡ Unverifiable: 1/12</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Research, recombination, and receipts.</div>
+  <div class="takeaway">Secondary research is innovation practice, not a chore.</div>
+  <div class="artifact">Artifact: Source Quality Matrix + verified summary + positioning</div>
+  <div class="cmd-block">
+    <span class="cont">"Summarize these 5 sources on urban farming policy in Detroit."</span>
+    <div class="output"><span class="cyan">Synthesizing 5 sources...</span></div>
+    <div class="output"><span class="amber">Key claims across sources:</span></div>
+    <div class="output"><span class="amber">1. Zoning reform passed 2023 (Source A, B, D)</span></div>
+    <div class="output"><span class="amber">2. 40% of lots still vacant (Source A, C)</span></div>
+    <div class="output"><span class="amber">3. Grant funding increased 200% <span class="red">[Source C only — unverified]</span></span></div>
+    <span class="cont">"Verify claim 3 against the original."</span>
+    <div class="output"><span class="red">Claim unsupported. Source C misquoted a 20% increase as 200%.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B11</span> The Stack</div>
+    <div class="card-meta">Day 15 · 7/17 Fri · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 1.10, 4.6, 4.7
+  </div>
+  <div class="ascii-art"><span class="m">  ┌─────────────────────┐
+  │ <span class="c">Your App / Prompt</span>   │
+  ├─────────────────────┤
+  │ <span class="a">Model API (GPT-4o)</span>  │
+  ├─────────────────────┤
+  │ <span class="g">Inference Compute</span>    │
+  ├─────────────────────┤
+  │ Cloud (AWS / GCP)   │
+  ├─────────────────────┤
+  │ Data Center         │
+  ├─────────────────────┤
+  │ Power Grid          │
+  ├─────────────────────┤
+  │ Supply Chain        │
+  └─────────────────────┘
+  &nbsp;
+  <span class="r">The floor under the floor.</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">The floor under the floor.</div>
+  <div class="takeaway">AI products are not free-floating magic.</div>
+  <div class="artifact">Artifact: Stack diagram + infrastructure budget</div>
+  <div class="cmd-block">
+    <span class="cont">"Map the infrastructure required for a single Claude query."</span>
+    <div class="output"><span class="cyan">Tracing request path...</span></div>
+    <div class="output"><span class="amber">1. Your terminal → HTTPS request</span></div>
+    <div class="output"><span class="amber">2. Load balancer → API gateway</span></div>
+    <div class="output"><span class="amber">3. GPU cluster (~400W per inference)</span></div>
+    <div class="output"><span class="amber">4. Response → token stream → your screen</span></div>
+    <div class="output"><span class="red">Estimated CO₂: 0.4g per query</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="section-cmd">cat week-4</div>
+
+<div class="week-header"><span class="num">##</span> WEEK 4: ai is a position, not a destination</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B12</span> The Invisible Market</div>
+    <div class="card-meta">Day 16 · 7/20 Mon · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 8.1
+  </div>
+  <div class="ascii-art"><span class="m">       <span class="c">Gap</span>
+       .───.
+      (     )
+       '───'
+         ↑
+    .─────────────.
+   |  Market Data  |
+   |██████████░░░░░|
+   |██████░░░░░░░░░|
+   |░░░░░░░░░░░░░░░|
+    '─────────────'
+  &nbsp;
+  <span class="g">The gap in the data
+   is the wedge in the market.</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">The statistical shadow returns with teeth.</div>
+  <div class="takeaway">The gap in the data is the wedge in the market.</div>
+  <div class="artifact">Artifact: Exa market brief + Gaps Map + wedge hypothesis</div>
+  <div class="cmd-block">
+    <span class="cont">"Search for market data on youth-led agritech startups in West Africa."</span>
+    <div class="output"><span class="cyan">Searching Exa index...</span></div>
+    <div class="output"><span class="amber">Found 34 relevant results.</span></div>
+    <div class="output"><span class="amber">Funding: $12M total (2024) vs $890M (general agritech)</span></div>
+    <div class="output"><span class="red">Gap: Youth-led segment is 1.3% of total funding</span></div>
+    <div class="output"><span class="green">Opportunity wedge identified.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B13</span> The Automated Self</div>
+    <div class="card-meta">Day 17 · 7/21 Tue · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 4.7, 7.1 &nbsp;·&nbsp; <strong>AOT:</strong> L7 AI agents → concept tour
+  </div>
+  <div class="ascii-art"><span class="m">      .──────────.
+     |  Robot    |
+     |  Head     |
+     |  .──.     |      .──.
+     | | <3 |    |     | <3 |
+     |  '──'     |      '──'
+     |           |    Human Heart
+      '──────────'
+  &nbsp;
+  <span class="a">Never "can you automate it"
+   but "should you, and what is lost."</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">Pitch coach with anti-sycophancy.</div>
+  <div class="takeaway">Never "can you automate it" but "should you, and what is lost."</div>
+  <div class="artifact">Artifact: Working pitch coach + "what I won't automate" statement</div>
+  <div class="cmd-block">
+    <span class="prompt">claude</span>
+    <span class="cont">"Use the pitch-coach agent. Rate my 60-second pitch 1-10."</span>
+    <div class="output"><span class="cyan">Pitch Coach agent engaged.</span></div>
+    <div class="output"><span class="amber">Score: 6/10</span></div>
+    <div class="output"><span class="amber">Strengths: clear problem statement, emotional hook</span></div>
+    <div class="output"><span class="amber">Weaknesses: no mention of competition, weak closing ask</span></div>
+    <span class="cont">/clear</span>
+    <div class="output"><span class="green">Session cleared.</span></div>
+    <span class="prompt">claude -p "Rate this pitch 1-10, be brutally honest: [...paste...]"</span>
+    <div class="output"><span class="amber">3. Strong concept, zero delivery practice.</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="card">
+  <div class="box-corner-tl"></div><div class="box-corner-tr"></div><div class="box-corner-bl"></div><div class="box-corner-br"></div>
+  <div class="card-header">
+    <div class="card-title"><span class="num">B14</span> The Mark</div>
+    <div class="card-meta">Day 18 · 7/22 Wed · 90 min</div>
+  </div>
+  <hr class="card-divider">
+  <div class="card-info">
+    <strong>Journey:</strong> 7.2, 7.3, 8.2
+  </div>
+  <div class="ascii-art"><span class="m">      ✋
+     .───.
+    (     )
+     '───'
+       |
+   .───┴───.
+  │  TOOLTIP│
+  │ "Brand  │
+  │  mark   │
+  │  v3.2"  │
+   '───────'
+  &nbsp;
+  <span class="g">AI as accelerant ≠ AI as substitute
+  Staged physically in one room.</span></span></div>
+  <div class="concept-tag">concept</div>
+  <div class="card-info">AI as accelerant vs AI as substitute.</div>
+  <div class="takeaway">Staged physically in one room.</div>
+  <div class="artifact">Artifact: Brand mark + annotated process log</div>
+  <div class="cmd-block">
+    <span class="cont">"Generate 10 logo concepts for 'Root &amp; Rise', a youth farming collective."</span>
+    <div class="output"><span class="cyan">Generating concepts...</span></div>
+    <div class="output"><span class="amber">1. Seedling + rising sun (organic)</span></div>
+    <div class="output"><span class="amber">2. Interlocking R shapes (modern)</span></div>
+    <div class="output"><span class="amber">3. Hand holding root (literal)</span></div>
+    <div class="output"><span class="amber">...</span></div>
+    <span class="cont">"Refine variation 3. Make it more abstract."</span>
+    <div class="output"><span class="cyan">Refining...</span></div>
+    <div class="output"><span class="amber">Variation 3b: Root system as upward arrow</span></div>
+    <span class="exit"></span>
+  </div>
+</div>
+
+<div class="scroll-hint">$ █</div>
+
+</div>
+</body>
+</html>

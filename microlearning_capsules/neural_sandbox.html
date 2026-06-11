@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neural Sandbox Pro | Real API Integration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Mono&family=Space+Grotesk:wght@300;700&display=swap');
+        body { font-family: 'Space Grotesk', sans-serif; background-color: #020617; color: #f8fafc; }
+        .mono { font-family: 'Space Mono', monospace; }
+        .neuron-active { border: 1px solid #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.2); }
+        .neuron-decay { opacity: 0.3; filter: grayscale(1); border-color: #ef4444 !important; }
+        .settings-panel { transform: translateX(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .settings-open .settings-panel { transform: translateX(0); }
+    </style>
+</head>
+<body class="min-h-screen p-6 overflow-x-hidden">
+    
+    <!-- API Settings Sidebar -->
+    <div id="settings-root" class="fixed inset-y-0 right-0 w-80 bg-slate-900 border-l border-slate-800 z-50 settings-panel p-8 shadow-2xl">
+        <h3 class="text-sm font-bold uppercase tracking-widest text-blue-500 mb-6">Neural Link Settings</h3>
+        <div class="space-y-4">
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">OpenRouter API Key</label>
+                <input id="api-key" type="password" class="w-full bg-black border border-slate-700 rounded-lg px-3 py-2 mt-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none" placeholder="sk-or-v1-...">
+            </div>
+            <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase">Model Select</label>
+                <select id="model-select" class="w-full bg-black border border-slate-700 rounded-lg px-3 py-2 mt-1 text-xs focus:ring-1 focus:ring-blue-500 outline-none">
+                    <option value="anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="openai/gpt-4o-mini">GPT-4o Mini (Cheaper)</option>
+                    <option value="meta-llama/llama-3.1-8b-instruct:free">Llama 3.1 8B (Free)</option>
+                </select>
+            </div>
+            <button onclick="toggleSettings()" class="w-full mt-4 bg-slate-800 py-2 rounded-lg text-xs font-bold hover:bg-slate-700 transition">Save & Close</button>
+        </div>
+    </div>
+
+    <header class="max-w-6xl mx-auto mb-8 flex justify-between items-end">
+        <div>
+            <span class="bg-blue-600 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-tighter">Capsule 07: Architecture</span>
+            <h1 class="text-3xl font-bold mt-2">Neural Sandbox <span class="text-blue-500">PRO</span></h1>
+            <p class="text-slate-500 text-sm">Real LLM Context Testing</p>
+        </div>
+        <button onclick="toggleSettings()" class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-4 py-2 rounded-xl text-xs font-bold hover:border-blue-500 transition">
+            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+            Configure API
+        </button>
+    </header>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div class="lg:col-span-4 space-y-6">
+            <div class="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">1. Knowledge Injection</h3>
+                <textarea id="data-input" class="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 h-48 outline-none text-xs leading-relaxed mb-4" placeholder="Inject info..."></textarea>
+                <button onclick="injectKnowledge()" class="w-full bg-blue-600 py-3 rounded-xl font-bold text-sm">Inject</button>
+            </div>
+
+            <div class="bg-slate-900/50 border border-slate-800 p-6 rounded-3xl">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-slate-400 mb-4">2. Real API Query</h3>
+                <input id="query-input" type="text" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm" placeholder="Ask about the knowledge...">
+                <button onclick="queryModel()" class="w-full mt-4 bg-pink-600 py-3 rounded-xl font-bold text-sm">Query Model</button>
+            </div>
+        </div>
+
+        <div class="lg:col-span-8 bg-black/40 border border-slate-800 rounded-[2.5rem] p-8 flex flex-col min-h-[600px]">
+            <div id="neural-grid" class="flex-1 grid grid-cols-2 md:grid-cols-3 gap-4 content-start overflow-y-auto pr-2">
+                <!-- Chunks -->
+            </div>
+
+            <div class="mt-6 p-6 bg-slate-950 rounded-2xl border border-slate-800">
+                <p class="text-[10px] uppercase font-bold text-slate-600 mb-2">Live Model Output</p>
+                <div id="ai-thought" class="text-sm italic text-slate-400">Waiting for API call...</div>
+                <div id="token-usage" class="mt-4 text-[10px] font-mono text-blue-500 hidden"></div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        let neurons = [];
+        const MAX_CAPACITY = 2000;
+        let currentTokens = 0;
+
+        function toggleSettings() {
+            document.body.classList.toggle('settings-open');
+        }
+
+        function injectKnowledge() {
+            const input = document.getElementById('data-input');
+            const text = input.value.trim();
+            if (!text) return;
+
+            const tokens = Math.ceil(text.length / 4);
+            neurons.push({ content: text, tokens: tokens });
+            currentTokens += tokens;
+            input.value = '';
+            updateUI();
+        }
+
+        function updateUI() {
+            const grid = document.getElementById('neural-grid');
+            grid.innerHTML = '';
+            
+            // Simplified Decay Simulation: Hide facts if we are way over
+            const activeLimit = 10; 
+            neurons.forEach((n, index) => {
+                const isDecaying = (neurons.length - index) > activeLimit;
+                const el = document.createElement('div');
+                el.className = `p-4 rounded-xl border text-[10px] mono transition-all ${isDecaying ? 'neuron-decay' : 'neuron-active bg-slate-900/50'}`;
+                el.innerHTML = `<div class="mb-2 text-blue-400 font-bold">CHUNK_${index}</div><div class="line-clamp-3">${n.content}</div>`;
+                grid.prepend(el);
+            });
+        }
+
+        async function queryModel() {
+            const key = document.getElementById('api-key').value;
+            const model = document.getElementById('model-select').value;
+            const query = document.getElementById('query-input').value;
+            const thought = document.getElementById('ai-thought');
+            const usage = document.getElementById('token-usage');
+
+            if (!key) { alert("Please enter an OpenRouter API Key in settings!"); return; }
+            if (!query) return;
+
+            thought.innerHTML = '<span class="animate-pulse">Calling OpenRouter API...</span>';
+            
+            // Build the REAL Context Window
+            const activeContext = neurons.slice(-10).map(n => n.content).join("\n\n");
+            
+            try {
+                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${key}`,
+                        "Content-Type": "application/json",
+                        "HTTP-Referer": "http://localhost", // Optional
+                        "X-Title": "IFE Microlearning"
+                    },
+                    body: JSON.stringify({
+                        "model": model,
+                        "messages": [
+                            {"role": "system", "content": "You are a helpful assistant. Use ONLY the provided context to answer. If the answer isn't in context, say you don't know."},
+                            {"role": "user", "content": `Context:\n${activeContext}\n\nQuestion: ${query}`}
+                        ]
+                    })
+                });
+
+                const data = await response.json();
+                const content = data.choices[0].message.content;
+                const promptTokens = data.usage.prompt_tokens;
+
+                thought.innerHTML = `<span class="text-white">${content}</span>`;
+                usage.innerHTML = `API LOG: Prompt Tokens: ${promptTokens} | Completion Tokens: ${data.usage.completion_tokens}`;
+                usage.classList.remove('hidden');
+
+            } catch (error) {
+                thought.innerHTML = `<span class="text-red-500">API Error: ${error.message}</span>`;
+            }
+        }
+
+        updateUI();
+    </script>
+</body>
+</html>

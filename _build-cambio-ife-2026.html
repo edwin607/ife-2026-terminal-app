@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IFE 2026 AI Literacy Track — Block Cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --cambio-primary: #c8b8e0;
+    --cambio-secondary: #d8b8c8;
+    --cambio-tertiary: #a8c8d8;
+    --cambio-bg: #f8f7f5;
+    --cambio-card: #ffffff;
+    --cambio-border: #d8d5dc;
+    --cambio-text: #2a2830;
+    --cambio-muted: #8a8892;
+    --cambio-line: #c8c5cc;
+    --dot-y: #f5c542; --dot-c: #f56a6a; --dot-t: #3ec9a7; --dot-p: #a87ff0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--cambio-bg);
+    color: var(--cambio-text);
+    font-family: 'Space Grotesk', sans-serif;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .page { max-width: 840px; margin: 0 auto; padding: 40px 28px; }
+
+  /* ---------- COVER ---------- */
+  .cover { min-height: 100vh; display: flex; flex-direction: column; justify-content: center;
+    padding: 60px 56px; position: relative; }
+  .cover .eyebrow { font-size: 12px; letter-spacing: 5px; text-transform: uppercase; color: var(--cambio-muted); margin-bottom: 18px; }
+  .cover h1 { font-size: 52px; font-weight: 700; line-height: 1.05; letter-spacing: -1px; }
+  .cover h1 .accent { color: var(--dot-p); }
+  .cover .slot { font-size: 14px; letter-spacing: 2px; text-transform: uppercase; color: var(--cambio-muted); margin-top: 22px; }
+  .cover .rule { width: 64px; height: 3px; background: var(--cambio-primary); margin: 32px 0; }
+  .cover .meta { font-size: 13px; line-height: 1.9; color: var(--cambio-text); }
+  .cover .meta b { font-weight: 600; }
+  .cover .meta .dim { color: var(--cambio-muted); }
+  .cover .ref { margin-top: 22px; font-size: 12.5px; color: var(--cambio-muted); line-height: 1.7;
+    border-left: 3px solid var(--dot-t); padding-left: 14px; max-width: 560px; }
+  .cover .ref a { color: var(--cambio-tertiary); word-break: break-all; }
+  .dots { position: absolute; bottom: 56px; right: 56px; display: flex; gap: 14px; }
+  .dots span { width: 30px; height: 30px; border-radius: 50%; display: inline-block; }
+
+  /* ---------- REFERENCE PAGE ---------- */
+  .sec-eyebrow { font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--cambio-muted); }
+  .sec-h { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin: 6px 0 18px; }
+  .lead { font-size: 14px; line-height: 1.7; color: var(--cambio-text); max-width: 640px; margin-bottom: 20px; }
+  .callout { background: var(--cambio-card); border: 1px solid var(--cambio-border); border-left: 4px solid var(--dot-t);
+    padding: 18px 22px; margin: 18px 0; }
+  .callout .k { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--cambio-muted); }
+  .callout .v { font-size: 15px; font-weight: 600; margin: 4px 0 6px; }
+  .callout a { color: var(--cambio-tertiary); font-size: 12.5px; word-break: break-all; }
+  .spine { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 12.5px; }
+  .spine th { text-align: left; font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--cambio-muted);
+    border-bottom: 1px solid var(--cambio-line); padding: 8px 10px; }
+  .spine td { padding: 8px 10px; border-bottom: 1px solid var(--cambio-line); vertical-align: top; }
+  .spine td b { font-weight: 600; }
+  .spine .wkcell { font-size: 11px; color: var(--cambio-muted); }
+
+  .legend { display: flex; gap: 18px; flex-wrap: wrap; margin: 22px 0 8px; font-size: 11px; color: var(--cambio-muted); }
+  .lg { display: flex; align-items: center; gap: 6px; }
+  .sw { width: 12px; height: 12px; border: 1.5px solid; display: inline-block; }
+
+  /* ---------- WEEK + CARDS ---------- */
+  .wk { font-size: 13px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase;
+    color: var(--cambio-muted); margin: 34px 0 14px; padding-bottom: 8px; border-bottom: 1px solid var(--cambio-line); }
+  .wk b { color: var(--cambio-text); }
+
+  .card { background: var(--cambio-card); border: 1px solid var(--cambio-border);
+    padding: 18px 22px 16px; margin-bottom: 14px; page-break-inside: avoid; break-inside: avoid; }
+  .card-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  .card-n { font-size: 13px; font-weight: 700; color: var(--cambio-tertiary); min-width: 22px; }
+  .card-t { font-size: 16px; font-weight: 600; }
+  .card-m { font-size: 11px; color: var(--cambio-muted); margin-left: auto; white-space: nowrap; }
+  .take { font-size: 12.5px; font-style: italic; color: #555; margin: 2px 0 12px; }
+
+  .gantt { position: relative; height: 26px; display: flex;
+    border-left: 1px solid var(--cambio-line); border-right: 1px solid var(--cambio-line); }
+  .gantt-s { height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 9px; font-weight: 500; position: relative; overflow: hidden; }
+  .gantt-s:not(:last-child) { border-right: 1px solid var(--cambio-card); }
+  .gantt-s span { position: relative; z-index: 1; opacity: 0.78; line-height: 1; padding: 0 2px; }
+
+  .tl { display: flex; position: relative; height: 18px;
+    border-left: 1px solid var(--cambio-line); border-right: 1px solid var(--cambio-line); margin-bottom: 10px; }
+  .tl-t { position: absolute; top: 0; width: 1px; height: 7px; background: var(--cambio-line); }
+  .tl-t span { position: absolute; top: 9px; left: 50%; transform: translateX(-50%); font-size: 9px; color: var(--cambio-muted); white-space: nowrap; }
+
+  .foot { display: flex; gap: 18px; flex-wrap: wrap; border-top: 1px solid var(--cambio-line); padding-top: 10px; font-size: 11px; }
+  .foot .fi { display: flex; gap: 6px; }
+  .foot .fl { color: var(--cambio-muted); text-transform: uppercase; letter-spacing: 1px; font-size: 9.5px; padding-top: 1px; }
+  .foot .fv { font-weight: 500; }
+  .foot .fv.jr { color: var(--cambio-tertiary); }
+
+  @media print {
+    body { background: #fff; }
+    .page { padding: 0; max-width: none; }
+    .cover, .refpage, .cardspage { padding: 16mm 16mm; }
+    .cover { min-height: auto; height: 257mm; }
+    .pagebreak { page-break-before: always; break-before: page; }
+    @page { size: Letter; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== COVER ===================== -->
+<section class="cover">
+  <div class="eyebrow">Cambio Labs</div>
+  <h1>AI Literacy Track<br><span class="accent">IFE 2026</span></h1>
+  <div class="slot">The Incubator · Afternoon Block · 1:30 to 3:00</div>
+  <div class="rule"></div>
+  <div class="meta">
+    <b>14 AI companion modules</b> · <span class="dim">B1–B14, across the 23-day program</span><br>
+    <b>Run-of-show block cards</b> · <span class="dim">segment timing + artifact per block</span><br>
+    <span class="dim">Incorporates D-Cal's review · built for 40+ students · June 2026</span>
+  </div>
+  <div class="ref">
+    Companion layer to the master plan — <b>"2026 IFE summer program AI modules"</b> (Google Sheet),
+    which holds the day-by-day calendar, Journey anchors, and AOT placements.<br>
+    <a href="https://docs.google.com/spreadsheets/d/1yRyQ0prUEzAzXGa9CrdZbpCZmKWjhAqbL2LAVGa-EUU/edit">docs.google.com/spreadsheets/d/1yRyQ0prUEzAzXGa9CrdZbpCZmKWjhAqbL2LAVGa-EUU</a>
+  </div>
+  <div class="dots"><span style="background:var(--dot-y)"></span><span style="background:var(--dot-c)"></span><span style="background:var(--dot-t)"></span><span style="background:var(--dot-p)"></span></div>
+</section>
+
+<!-- ===================== REFERENCE PAGE ===================== -->
+<section class="refpage page pagebreak">
+  <div class="sec-eyebrow">How to read this</div>
+  <div class="sec-h">The AI track is a companion layer, not a second curriculum</div>
+  <p class="lead">
+    The core youth social-entrepreneurship program runs on the Journey platform (checkpoints CP1–CP8).
+    These 14 AI modules ride alongside it: each one is the applied AI lab for an existing Journey lesson.
+    The block cards below show the run of show for each module — every block opens with a 2-minute recall,
+    builds a real artifact, and closes on a human judgment the machine cannot make.
+  </p>
+
+  <div class="callout">
+    <div class="k">Master source · single source of truth</div>
+    <div class="v">2026 IFE summer program AI modules (Google Sheet)</div>
+    <div>Day-by-day calendar · Journey companion anchors · AOT placements · learning objectives<br>
+    <a href="https://docs.google.com/spreadsheets/d/1yRyQ0prUEzAzXGa9CrdZbpCZmKWjhAqbL2LAVGa-EUU/edit">docs.google.com/spreadsheets/d/1yRyQ0prUEzAzXGa9CrdZbpCZmKWjhAqbL2LAVGa-EUU</a></div>
+  </div>
+
+  <div class="sec-eyebrow" style="margin-top:26px">The four-week spine</div>
+  <table class="spine">
+    <thead><tr><th>Week</th><th>Frame</th><th>What students learn about AI</th></tr></thead>
+    <tbody>
+      <tr><td class="wkcell"><b>W1</b></td><td><b>ai is a mirror, not a mind</b></td><td>Inheritance, positionality, hallucination</td></tr>
+      <tr><td class="wkcell"><b>W2</b></td><td><b>ai is a sampler, not a source</b></td><td>Training-data politics, sycophancy, what is missing</td></tr>
+      <tr><td class="wkcell"><b>W3</b></td><td><b>ai is a tool, not an agent</b></td><td>CLI vs chat, harnessing, orchestration</td></tr>
+      <tr><td class="wkcell"><b>W4</b></td><td><b>ai is a position, not a destination</b></td><td>Hidden costs, the belief economy, transparent pitching</td></tr>
+    </tbody>
+  </table>
+
+  <div class="legend" id="legend"></div>
+  <p class="lead" style="font-size:12px;color:var(--cambio-muted);margin-top:4px">
+    Each card: segment bar (run of show) · timeline (minutes) · activity key · takeaway · artifact · Journey companion · calendar date.
+  </p>
+</section>
+
+<!-- ===================== CARDS ===================== -->
+<section class="cardspage page pagebreak">
+  <div class="sec-eyebrow">The 14 blocks</div>
+  <div class="sec-h">Block cards — run of show &amp; artifacts</div>
+  <div id="content"></div>
+</section>
+
+<script>
+const COL = {
+  recall:  { fill: '#e8e0f0', bar: '#b8a8d0' },
+  instructor: { fill: '#f0e0e8', bar: '#c8a8b8' },
+  pod:    { fill: '#d8ece8', bar: '#98c0b8' },
+  share:  { fill: '#ece0c8', bar: '#c8b888' },
+  exit:   { fill: '#e8e6ea', bar: '#b8b5bc' }
+};
+
+const MODULES = [
+  {n:'The Inheritance', w:'WEEK 1 · <b>ai is a mirror, not a mind</b>', m:'W1 D2 · 90 min · Jun 30', d:90,
+   take:'There is no neutral model.', art:'2026 Prompt Cheat Sheet v0', jr:'1.6, 1.7, 2.1',
+   segs:[{t:'Recall',s:'recall',w:4},{t:'Instructor',s:'instructor',w:10},{t:'Pod: Train-the-prompt',s:'pod',w:20},{t:'Pod: Cheat-sheet v0',s:'pod',w:16},{t:'Share: Pairs',s:'share',w:12},{t:'Pod: Iterate',s:'pod',w:12},{t:'Exit',s:'exit',w:4}]},
+  {n:'Same Question, Different Mouths', w:'WEEK 1 · <b>ai is a mirror, not a mind</b>', m:'W1 D3 · 80 min · Jul 1', d:80,
+   take:'ai has a default position, and it is not yours.', art:'Positionality template + 3-model diff', jr:'2.10 Innovation Challenge',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:5},{t:'Instructor: Demo',s:'instructor',w:14},{t:'Pod: Compare outputs',s:'pod',w:25},{t:'Share: Gallery',s:'share',w:14},{t:'Pod: Reframe',s:'pod',w:14},{t:'Exit',s:'exit',w:3}]},
+  {n:'The Sanity Report', w:'WEEK 1 · <b>ai is a mirror, not a mind</b>', m:'W1 D4 · 60 min · Jul 2', d:60,
+   take:'Hallucination is structural; the audit is the skill you keep.', art:'1-page Sanity Report', jr:'1.12, 2.4, 2.5, 2.9',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:10},{t:'Instructor: Re-rank',s:'instructor',w:12},{t:'Pod: Sanity-check',s:'pod',w:30},{t:'Share: Rank',s:'share',w:12},{t:'Exit',s:'exit',w:6}]},
+  {n:'The Statistical Shadow', w:'WEEK 2 · <b>ai is a sampler, not a source</b>', m:'W2 D1 · 90 min · Jul 6', d:90,
+   take:'ai knows statistical aggregates, not people.', art:'Persona-vs-data chart + delta writeup', jr:'2.3, 2.6, 2.9, 5.1, 5.7',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Pod: Draw',s:'pod',w:8},{t:'Pod: Sample',s:'pod',w:12},{t:'Pod: Distributions',s:'pod',w:24},{t:'Pod: Predict-next',s:'pod',w:16},{t:'Share: Gallery',s:'share',w:12}]},
+  {n:'The Yes-Man', w:'WEEK 2 · <b>ai is a sampler, not a source</b>', m:'W2 D2 · 90 min · Jul 7', d:90,
+   take:'Any input can become a master if you do not watch the doors.', art:'Interview guide · system prompt · risk surface', jr:'2.8, 2.9, 4.2',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:8},{t:'Pod: Jailbreak',s:'pod',w:8},{t:'Pod: Test',s:'pod',w:12},{t:'Pod: Document',s:'pod',w:16},{t:'Instructor: Debrief',s:'instructor',w:12},{t:'Pod: Safety brief',s:'pod',w:12},{t:'Exit',s:'exit',w:4}]},
+  {n:'The Generation Game', w:'WEEK 2 · <b>ai is a sampler, not a source</b>', m:'W2 D3 · 90 min · Jul 8', d:90,
+   take:'A synthesizer inherits everything its training did — verification is the move.', art:'Verified theme map + outlier + creator stance', jr:'2.3, 2.7, 4.3',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:12},{t:'Instructor: Fail',s:'instructor',w:8},{t:'Pod: Generate',s:'pod',w:26},{t:'Pod: Audit',s:'pod',w:16},{t:'Share: Compare',s:'share',w:8}]},
+  {n:'The Stage Set', w:'WEEK 2 · <b>ai is a sampler, not a source</b>', m:'W2 D5 · 90 min · Jul 10', d:90,
+   take:'Context engineering is a design discipline.', art:'Context brief template + AI Integration Plan', jr:'3.10, 4.8 (live refresh)',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:12},{t:'Instructor: Brief',s:'instructor',w:12},{t:'Pod: Plan',s:'pod',w:30},{t:'Pod: Prep',s:'pod',w:16},{t:'Exit',s:'exit',w:2}]},
+  {n:'Not the Writer, Not the Designer', w:'WEEK 3 · <b>ai is a tool, not an agent</b>', m:'W3 D1 · 90 min · Jul 13', d:90,
+   take:'ai does not have roles; you assign it scaffolding. The roles stay yours.', art:'Vibe-coded asset + Role Lattice', jr:'4.4, 8.1',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:16},{t:'Share: Impressions',s:'share',w:8},{t:'Pod: Claude Code',s:'pod',w:32},{t:'Pod: Debrief',s:'pod',w:12},{t:'Exit',s:'exit',w:2}]},
+  {n:'The Imaginary Friend', w:'WEEK 3 · <b>ai is a tool, not an agent</b>', m:'W3 D2 · 90 min · Jul 14', d:90,
+   take:'The need is real, the friend is imaginary — both are true at once.', art:'Need-vs-projection map + anthropomorphism stance', jr:'1.9',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Share: Persona',s:'share',w:12},{t:'Instructor',s:'instructor',w:20},{t:'Pod: Map',s:'pod',w:20},{t:'Pod: Stance',s:'pod',w:16},{t:'Exit',s:'exit',w:2}]},
+  {n:'The Footnote', w:'WEEK 3 · <b>ai is a tool, not an agent</b>', m:'W3 D3 · 90 min · Jul 15', d:90,
+   take:'Not all features are good; secondary research is innovation practice.', art:'Source Quality Matrix + verified summary', jr:'2.8, 5.4, 6.1, 6.3',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:12},{t:'Instructor: Search',s:'instructor',w:12},{t:'Instructor: Matrix',s:'instructor',w:8},{t:'Pod: Verify',s:'pod',w:28},{t:'Share: Report',s:'share',w:10}]},
+  {n:'The Stack', w:'WEEK 3 · <b>ai is a tool, not an agent</b>', m:'W3 D5 · 90 min · Jul 17', d:90,
+   take:'ai products are not free-floating magic — you are learning the substrate.', art:'Stack diagram + infrastructure budget', jr:'1.10, 4.6, 4.7',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:20},{t:'Pod: Map',s:'pod',w:32},{t:'Pod: Budget',s:'pod',w:16},{t:'Exit',s:'exit',w:2}]},
+  {n:'The Invisible Market', w:'WEEK 4 · <b>ai is a position, not a destination</b>', m:'W4 D1 · 90 min · Jul 20', d:90,
+   take:'The gap in the data is the wedge in the market.', art:'Exa market brief + Gaps Map + wedge hypothesis', jr:'8.1',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:12},{t:'Pod: Brief',s:'pod',w:24},{t:'Pod: Map',s:'pod',w:20},{t:'Pod: Pitch',s:'pod',w:14}]},
+  {n:'The Automated Self', w:'WEEK 4 · <b>ai is a position, not a destination</b>', m:'W4 D2 · 90 min · Jul 21', d:90,
+   take:'Never "can you automate it" — always "should you, and what is lost."', art:'Pitch coach + "what I will not automate" statement', jr:'4.7, 7.1',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:12},{t:'Pod: Curate',s:'pod',w:16},{t:'Pod: Build',s:'pod',w:32},{t:'Share: Showcase',s:'share',w:10}]},
+  {n:'The Mark', w:'WEEK 4 · <b>ai is a position, not a destination</b>', m:'W4 D3 · 90 min · Jul 22', d:90,
+   take:'ai as accelerant vs ai as substitute, staged physically in one room.', art:'Finished brand mark + annotated process log', jr:'7.2, 7.3, 8.2',
+   segs:[{t:'Recall',s:'recall',w:2},{t:'Instructor',s:'instructor',w:4},{t:'Pod: Brand',s:'pod',w:30},{t:'Pod: Pitch',s:'pod',w:32},{t:'Share: Critique',s:'share',w:4}]}
+];
+
+// Legend
+const lg = document.getElementById('legend');
+for (const [k, v] of Object.entries(COL)) {
+  const el = document.createElement('span'); el.className = 'lg';
+  el.innerHTML = '<span class="sw" style="border-color:'+v.bar+';background:'+v.fill+'"></span>'+k.charAt(0).toUpperCase()+k.slice(1);
+  lg.appendChild(el);
+}
+
+// Cards
+const ct = document.getElementById('content');
+let lastW = '';
+for (const m of MODULES) {
+  if (m.w !== lastW) {
+    lastW = m.w;
+    const wk = document.createElement('div'); wk.className = 'wk'; wk.innerHTML = m.w; ct.appendChild(wk);
+  }
+  const card = document.createElement('div'); card.className = 'card';
+
+  const h = document.createElement('div'); h.className = 'card-h';
+  h.innerHTML = '<span class="card-n">'+(MODULES.indexOf(m)+1)+'</span><span class="card-t">'+m.n+'</span><span class="card-m">'+m.m+'</span>';
+  card.appendChild(h);
+
+  const take = document.createElement('div'); take.className = 'take'; take.textContent = '“'+m.take+'”'; card.appendChild(take);
+
+  const g = document.createElement('div'); g.className = 'gantt';
+  for (const seg of m.segs) {
+    const s = document.createElement('div'); s.className = 'gantt-s';
+    s.style.width = (seg.w/m.d*100)+'%'; s.style.background = COL[seg.s].fill;
+    s.style.borderBottom = '2px solid '+COL[seg.s].bar; s.innerHTML = '<span>'+seg.t+'</span>'; g.appendChild(s);
+  }
+  card.appendChild(g);
+
+  const tl = document.createElement('div'); tl.className = 'tl';
+  for (let t = 0; t <= m.d; t += 15) {
+    const tk = document.createElement('div'); tk.className = 'tl-t'; tk.style.left = (t/m.d*100)+'%';
+    tk.innerHTML = '<span>'+t+'′</span>'; tl.appendChild(tk);
+  }
+  card.appendChild(tl);
+
+  const foot = document.createElement('div'); foot.className = 'foot';
+  foot.innerHTML =
+    '<div class="fi"><span class="fl">Artifact</span><span class="fv">'+m.art+'</span></div>'+
+    '<div class="fi"><span class="fl">Journey companion</span><span class="fv jr">'+m.jr+'</span></div>';
+  card.appendChild(foot);
+
+  ct.appendChild(card);
+}
+</script>
+</body>
+</html>

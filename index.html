@@ -8,7 +8,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  /* ── Deep Space palette ── */
   :root {
     --surface: #16111b;
     --surface-dim: #16111b;
@@ -49,22 +48,21 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  /* ── CRT overlay (RGB separation + scanline) ── */
   .crt-overlay {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background:
-      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%),
-      linear-gradient(90deg, rgba(255, 0, 0, 0.02), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.02));
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%),
+      linear-gradient(90deg, rgba(255, 0, 0, 0.015), rgba(0, 255, 0, 0.008), rgba(0, 0, 255, 0.015));
     background-size: 100% 4px, 3px 100%;
     pointer-events: none; z-index: 100;
-    opacity: 0.4;
+    opacity: 0.35;
   }
 
   .scanline-bar {
-    width: 100%; height: 100px;
+    width: 100%; height: 80px;
     z-index: 101;
-    background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
-    opacity: 0.15;
+    background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.025) 50%, transparent 100%);
+    opacity: 0.12;
     position: fixed;
     bottom: 100%;
     animation: scanlineMove 8s linear infinite;
@@ -81,17 +79,10 @@
     15% { opacity: 0.94; } 20% { opacity: 0.98; } 100% { opacity: 1; }
   }
 
-  .flicker {
-    animation: flicker 0.1s infinite;
-  }
+  .flicker { animation: flicker 0.1s infinite; }
 
-  .glow-text {
-    text-shadow: 0 0 10px rgba(231, 201, 255, 0.35);
-  }
-
-  .glow-border {
-    box-shadow: 0 0 15px rgba(231, 201, 255, 0.1);
-  }
+  .glow-text { text-shadow: 0 0 10px rgba(231, 201, 255, 0.35); }
+  .glow-border { box-shadow: 0 0 15px rgba(231, 201, 255, 0.1); }
 
   @keyframes bootFlash {
     0% { opacity: 0; }
@@ -116,19 +107,19 @@
   /* Title bar */
   .term-titlebar {
     display: flex; align-items: center; justify-content: space-between;
-    height: 40px;
-    padding: 0 16px;
+    height: 36px;
+    padding: 0 14px;
     background: var(--surface-dim);
-    border-bottom: 1px solid color-mix(in srgb, var(--primary) 20%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
     user-select: none; flex-shrink: 0;
   }
-  .term-dots { display: flex; gap: 8px; }
-  .term-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .term-dots { display: flex; gap: 7px; }
+  .term-dot { width: 11px; height: 11px; border-radius: 50%; }
   .term-dot.close { background: #ff5f56; }
   .term-dot.min { background: #ffbd2e; }
   .term-dot.max { background: #27c93f; }
   .term-title-label {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--outline);
     letter-spacing: 0.2em;
     text-transform: uppercase;
@@ -136,10 +127,119 @@
   }
   .term-title-label .brand { color: var(--primary-container); }
 
+  /* ── Header (Stitch intro) ── */
+  .term-header {
+    flex-shrink: 0;
+    background: var(--surface-container-low);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
+    user-select: none;
+  }
+  .term-header-top {
+    display: flex;
+    gap: 20px;
+    padding: 16px 24px 12px;
+    align-items: flex-start;
+  }
+  .term-header-logo {
+    flex-shrink: 0;
+  }
+  .term-header-logo pre {
+    font-size: 7px;
+    line-height: 1.15;
+    color: var(--primary-container);
+    text-shadow: 0 0 8px rgba(231, 201, 255, 0.3);
+  }
+  .term-header-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+  }
+  .term-header-status {
+    font-size: 10px;
+    color: var(--tertiary);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .term-header-status .pulse-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    background: var(--tertiary);
+    border-radius: 50%;
+    animation: cursorPulse 2s ease-in-out infinite;
+  }
+  .term-header-title {
+    font-size: 13px;
+    color: var(--primary-container);
+    text-shadow: 0 0 10px rgba(231, 201, 255, 0.25);
+    line-height: 1.3;
+    white-space: pre;
+  }
+  .term-header-meta {
+    display: flex;
+    gap: 24px;
+    font-size: 10px;
+    padding-top: 4px;
+  }
+  .term-header-meta .label {
+    color: var(--outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .term-header-meta .value {
+    color: var(--on-surface);
+    margin-left: 4px;
+  }
+
+  /* CLI command row */
+  .term-header-cmd {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 24px;
+    background: var(--surface-container-high);
+    border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--primary) 8%, transparent);
+    font-size: 12px;
+  }
+  .term-header-cmd .prompt {
+    color: var(--primary);
+    font-weight: 700;
+  }
+  .term-header-cmd .cmd-text {
+    color: color-mix(in srgb, var(--primary-container) 80%, transparent);
+  }
+  .term-header-cmd .cmd-cursor {
+    display: inline-block;
+    width: 7px; height: 14px;
+    background: var(--primary);
+    animation: cursorPulse 0.8s step-end infinite;
+    vertical-align: middle;
+    margin-left: 2px;
+  }
+  .term-header-cmd .cmd-meta {
+    margin-left: auto;
+    display: flex;
+    gap: 14px;
+    font-size: 10px;
+    color: color-mix(in srgb, var(--outline) 60%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .term-header-glow {
+    height: 1px;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--tertiary) 15%, transparent), transparent);
+  }
+
   /* Viewport */
   .term-viewport {
     flex: 1; overflow-y: auto; overflow-x: hidden;
-    padding: 12px 24px 80px;
+    padding: 12px 24px;
     position: relative;
   }
   .term-viewport::-webkit-scrollbar { width: 4px; }
@@ -147,13 +247,87 @@
   .term-viewport::-webkit-scrollbar-thumb { background: var(--outline-variant); }
   .term-viewport:focus { outline: none; }
 
+  /* ── Footer ── */
+  .term-footer {
+    flex-shrink: 0;
+    border-top: 1px solid color-mix(in srgb, var(--primary) 10%, transparent);
+    background: var(--surface-container-low);
+    user-select: none;
+  }
+  .term-footer-glow {
+    height: 1px;
+    background: linear-gradient(to right, transparent, color-mix(in srgb, var(--tertiary) 12%, transparent), transparent);
+  }
+  .term-footer-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 24px;
+    font-size: 10px;
+  }
+  .term-footer-analytics {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+  }
+  .term-footer-analytics pre {
+    font-size: 7px;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--primary) 50%, transparent);
+  }
+  .term-footer-analytics .stat {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .term-footer-analytics .stat .bar-track {
+    width: 80px; height: 6px;
+    background: var(--surface-container-highest);
+    position: relative;
+    overflow: hidden;
+  }
+  .term-footer-analytics .stat .bar-fill {
+    height: 100%;
+    background: var(--primary-container);
+    opacity: 0.5;
+  }
+  .term-footer-analytics .stat .bar-label {
+    font-size: 8px;
+    color: var(--outline);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .term-footer-analytics .stat .bar-pct {
+    font-size: 9px;
+    color: var(--on-surface);
+    margin-left: 4px;
+  }
+  .term-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    font-size: 9px;
+    color: color-mix(in srgb, var(--outline) 70%, transparent);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .term-footer-right .up {
+    display: inline-block;
+    width: 5px; height: 5px;
+    background: var(--tertiary);
+    border-radius: 50%;
+    margin-right: 4px;
+    vertical-align: middle;
+    animation: cursorPulse 3s ease-in-out infinite;
+  }
+
   /* Status bar */
   .term-status {
     display: flex; align-items: center; justify-content: space-between;
-    height: 32px;
+    height: 30px;
     padding: 0 16px;
     background: var(--surface-container-high);
-    border-top: 1px solid color-mix(in srgb, var(--primary) 15%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--primary) 12%, transparent);
     flex-shrink: 0;
     font-size: 11px;
     color: var(--outline);
@@ -162,13 +336,13 @@
   .term-status .left { display: flex; align-items: center; gap: 10px; }
   .term-status .right { display: flex; align-items: center; gap: 8px; }
   .term-status .indicator {
-    display: inline-block; width: 6px; height: 6px;
+    display: inline-block; width: 5px; height: 5px;
     background: var(--tertiary); border-radius: 50%;
     animation: cursorPulse 2s ease-in-out infinite;
   }
   .term-status .cursor-blink {
     display: inline-block;
-    width: 8px; height: 15px;
+    width: 7px; height: 14px;
     background: var(--primary);
     animation: cursorPulse 0.8s step-end infinite;
     vertical-align: middle; margin-left: 4px;
@@ -219,13 +393,21 @@
 
   ::selection { background: rgba(231, 201, 255, 0.2); }
 
-  @media (max-width: 600px) {
-    body { font-size: 12px; }
-    #screen { font-size: 11px; }
-    .term-viewport { padding: 8px 12px 60px; }
-    #boot { padding: 24px 20px; font-size: 11px; }
-    .term-titlebar { padding: 0 12px; }
-    .term-title-label { font-size: 10px; letter-spacing: 0.1em; }
+  @media (max-width: 640px) {
+    .term-viewport { padding: 8px 12px; }
+    .term-viewport #screen { font-size: 11px; }
+    .term-header-top { flex-direction: column; padding: 12px 14px 8px; gap: 10px; }
+    .term-header-logo { display: none; }
+    .term-header-title { font-size: 11px; }
+    .term-header-meta { flex-wrap: wrap; gap: 12px; }
+    .term-header-cmd { padding: 6px 14px; font-size: 10px; }
+    .term-header-cmd .cmd-meta { display: none; }
+    .term-footer-content { flex-direction: column; gap: 6px; padding: 6px 14px; }
+    .term-footer-analytics { width: 100%; }
+    .term-footer-right { width: 100%; justify-content: flex-end; }
+    .term-titlebar { height: 32px; padding: 0 10px; }
+    .term-title-label { font-size: 9px; letter-spacing: 0.1em; }
+    .term-header-title br { display: none; }
   }
 </style>
 </head>
@@ -235,7 +417,7 @@
 <div class="scanline-bar"></div>
 
 <div class="term-chrome" id="term">
-  <!-- Title bar -->
+  <!-- Title bar (macOS traffic-light dots) -->
   <div class="term-titlebar">
     <div class="term-dots">
       <div class="term-dot close"></div>
@@ -243,14 +425,62 @@
       <div class="term-dot max"></div>
     </div>
     <div class="term-title-label"><span class="brand">CAMBIO</span>_SYSTEM_READY — IFE 2026</div>
-    <div style="width:52px"></div>
+    <div style="width:48px"></div>
   </div>
 
-  <!-- Viewport -->
+  <!-- Stitch-inspired header with logo, title, and CLI row -->
+  <div class="term-header">
+    <div class="term-header-top">
+      <div class="term-header-logo">
+<pre>.............+.............
+.....;XxxxxxX;............
+..:$xxxxxxxxxx$$;.........
+.xxxxxxxxxxxx+xx$$$$$x....
+xXxx::+xxxxx+;..;xxX$$$xx.
+xxxxxxx..::;xxxxxxxxxxxxx.
+xxxxxxx...:xXxxxxxxxxxxxx
+..:+:+xx.X$;;xxxxxxxxx$$xx
+...xxxx;xxxx+:...xxxxxxxx
+...xxxxx.xxxx;..;xxxxxxxx
+...;+;x:xxx;xxx:xxxxxxxxx
+.xxxxxxx+:;....xx$$xxxxxxx
+.xxxxxxxxx;....xxxxxxxxxxx
+..:xxxxxxxx;.;xxxxxxxxxxxx
+.....xxxxxxxxxxxxxxxxX.....
+........+Xxxxxxxxxx........
+...........x$x$x...........
+...................................</pre>
+      </div>
+      <div class="term-header-info">
+        <div class="term-header-status">
+          <span class="pulse-dot"></span>
+          STATUS: CONNECTED — 127.0.0.1
+        </div>
+        <div class="term-header-title glow-text">╔══════════════════════════════════════════════╗<br/>║ Cambio CLI — IFE 2026 AI Literacy Track     ║<br/>╚══════════════════════════════════════════════╝</div>
+        <div class="term-header-meta">
+          <div><span class="label">Instance</span><span class="value">satellite_node_01</span></div>
+          <div><span class="label">Environment</span><span class="value">production.ife_2026</span></div>
+          <div><span class="label">Load Avg</span><span class="value">0.42 / 0.15 / 0.08</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="term-header-cmd">
+      <span class="prompt">$</span>
+      <span class="cmd-text">cambio --track=ai-literacy --mode=module-browser</span>
+      <span class="cmd-cursor"></span>
+      <span class="cmd-meta">
+        <span>UTF-8</span>
+        <span>ZSH</span>
+        <span id="clockDisplay">00:00</span>
+      </span>
+    </div>
+    <div class="term-header-glow"></div>
+  </div>
+
+  <!-- Viewport (scrollable TUI content) -->
   <div class="term-viewport" id="viewport" tabindex="0">
     <div id="screen"></div>
 
-    <!-- Boot overlay -->
     <div id="boot">
       <div class="line"><span class="prompt">CAMBIO_SYSTEM_READY</span><span class="gray"> terminal v1.0 — IFE 2026</span></div>
       <div class="line">&nbsp;</div>
@@ -260,6 +490,40 @@
       <div class="line"><span class="gray">[</span><span class="green">  OK  </span><span class="gray">] Context window — ██████████████ 14/14 blocks</span></div>
       <div class="line">&nbsp;</div>
       <div class="line"><span class="gray">⎿  Type </span><span class="amber">/help</span><span class="gray"> or press any key to continue...</span></div>
+    </div>
+  </div>
+
+  <!-- Footer with analytics bars and system status -->
+  <div class="term-footer">
+    <div class="term-footer-glow"></div>
+    <div class="term-footer-content">
+      <div class="term-footer-analytics">
+        <pre>+------------------+
+| CAMBIO ANALYTICS  |
++------------------+</pre>
+        <div class="stat">
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Context</span>
+            <span class="bar-track"><div class="bar-fill" style="width:82%"></div></span>
+            <span class="bar-pct">82%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Memory</span>
+            <span class="bar-track"><div class="bar-fill" style="width:41%"></div></span>
+            <span class="bar-pct">41%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px">
+            <span class="bar-label">Modules</span>
+            <span class="bar-track"><div class="bar-fill" style="width:94%"></div></span>
+            <span class="bar-pct">94%</span>
+          </div>
+        </div>
+      </div>
+      <div class="term-footer-right">
+        <span><span class="up"></span>Neural Engine Active</span>
+        <span>Satellite Sync: Stable</span>
+        <span>Uptime: 00:42:15</span>
+      </div>
     </div>
   </div>
 
@@ -277,7 +541,7 @@
 </div>
 
 <script>
-// ── ANSI color constants (unchanged — semantic triggers for CSS classes) ──
+// ── ANSI color constants ──
 const ESC = String.fromCharCode(27);
 const P   = ESC + '[38;2;231;201;255m';
 const T   = ESC + '[38;2;132;226;246m';
@@ -289,7 +553,6 @@ const B   = ESC + '[1m';
 const N   = ESC + '[0m';
 const BL  = ESC + '[38;2;13;14;20m';
 
-// ── ANSI → HTML converter ──
 function ansiToHtml(s) {
   if (!s) return '';
   let out = '';
@@ -350,9 +613,8 @@ function visibleLen(s) {
 }
 
 function fill(c, n) { return c + '\u2500'.repeat(Math.max(0, n)) + '</span>'; }
-function tag(l, c) { return c + '\u255c</span><span class="cg"> ' + l + ' </span>'; }
 
-// ── MODULES data (unchanged) ──
+// ── MODULES data ──
 const MODULES = [
   {id:'B1',n:'The Inheritance',d:'Day 2',dt:'6/30 Tue',du:'90 min',w:'Week 1',wt:'ai is a mirror, not a mind',
     f:'Where AI came from and what it carries.',t:'There is no neutral model.',a:'2026 Prompt Cheat Sheet v0',
@@ -538,13 +800,11 @@ const MODULES = [
 const WK = ['Week 1', 'Week 2', 'Week 3', 'Week 4'];
 const WL = {'Week 1':'WEEK 1: ai is a mirror, not a mind','Week 2':'WEEK 2: ai is a sampler, not a source','Week 3':'WEEK 3: ai is a tool, not an agent','Week 4':'WEEK 4: ai is a position, not a destination'};
 
-// ── State ──
 let si = 0;
 let detail = false;
 let di = 0;
-const _W = 74;
+const _W = 72;
 
-// ── Render: structural ──
 function renderTopBar(label) {
   const id = label || ' CAMBIO_CLI \u2014 IFE 2026 AI LITERACY TRACK ';
   return '<span class="cp">\u2554\u2550\u2550</span><span class="cg">'+id+'</span><span class="cp">\u2550\u2550\u2557</span>';
@@ -562,7 +822,6 @@ function renderBotBar(s) {
   return '<span class="cp">\u255a\u2550</span><span class="cg"> '+s+'</span><span class="cp"> \u2550'+'\u2550'.repeat(rest)+'\u255d</span>';
 }
 
-// ── Render: list view ──
 function renderList() {
   let o = '';
   o += renderTopBar() + '\n';
@@ -603,7 +862,6 @@ function renderList() {
   return o;
 }
 
-// ── Render: detail view ──
 function renderDetail(idx) {
   const b = MODULES[idx];
   let o = '';
@@ -650,7 +908,6 @@ function renderDetail(idx) {
   return o;
 }
 
-// ── Main render ──
 function render() {
   const screen = document.getElementById('screen');
   if (detail) {
@@ -665,7 +922,6 @@ function render() {
   document.getElementById('viewport').scrollTop = 0;
 }
 
-// ── Keyboard navigation ──
 function handleKey(e) {
   const key = e.key;
   if (detail) {
@@ -684,14 +940,11 @@ function handleKey(e) {
   if (key === 'Enter') { di = si; detail = true; render(); e.preventDefault(); return; }
   if (key === 'q' || key === 'Q' || key === 'Escape') { e.preventDefault(); return; }
   if (key === 'b' || key === 'B') { e.preventDefault(); return; }
-
-  // Flicker on any keypress (Stitch effect)
   const term = document.getElementById('term');
   term.classList.add('flicker');
   setTimeout(() => term.classList.remove('flicker'), 150);
 }
 
-// ── Click to select ──
 function handleClick(e) {
   if (detail) return;
   const screen = document.getElementById('screen');
@@ -709,7 +962,6 @@ function handleClick(e) {
   }
 }
 
-// ── Boot sequence ──
 function bootSequence() {
   const boot = document.getElementById('boot');
   const lines = boot.querySelectorAll('.line span');
@@ -718,21 +970,30 @@ function bootSequence() {
     span.style.animationDelay = (80 + i * 60) + 'ms';
     delay = Math.max(delay, 80 + i * 60 + 300);
   });
-  const bootTime = Math.max(delay, 1800);
   setTimeout(() => {
     boot.classList.add('hidden');
     document.getElementById('viewport').focus();
     render();
-  }, bootTime);
+  }, Math.max(delay, 1800));
 }
 
-// ── Init ──
+// Clock for cmd-meta
+function updateClock() {
+  const now = new Date();
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const el = document.getElementById('clockDisplay');
+  if (el) el.textContent = h + ':' + m;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const viewport = document.getElementById('viewport');
   document.addEventListener('keydown', handleKey);
   viewport.addEventListener('click', handleClick);
   viewport.focus();
   viewport.addEventListener('click', () => viewport.focus());
+  updateClock();
+  setInterval(updateClock, 10000);
   bootSequence();
 });
 </script>

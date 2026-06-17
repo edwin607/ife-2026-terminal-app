@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DAY 1 — ASCII Terminal</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --surface: #16111b;
+    --primary: #faecff;
+    --tertiary: #84e2f6;
+    --coral: #ff6d6d;
+    --amber: #d29922;
+    --green: #3fb950;
+    --gray: #968e98;
+    --outline: #4a454d;
+    --container: #231d28;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--surface);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    color: var(--primary);
+    overflow: hidden;
+  }
+
+  #ascii-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 0;
+    image-rendering: pixelated;
+  }
+
+  .crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background:
+      linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.08) 50%),
+      linear-gradient(90deg, rgba(255, 0, 0, 0.015), rgba(0, 255, 0, 0.008), rgba(0, 0, 255, 0.015));
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none; z-index: 10;
+    opacity: 0.35;
+  }
+
+  .scanline-bar {
+    width: 100%; height: 80px;
+    z-index: 11;
+    background: linear-gradient(0deg, transparent 0%, rgba(255, 255, 255, 0.025) 50%, transparent 100%);
+    opacity: 0.12;
+    position: fixed;
+    bottom: 100%;
+    animation: scanlineMove 8s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes scanlineMove {
+    0% { bottom: 100%; }
+    100% { bottom: -100%; }
+  }
+
+  .terminal-frame {
+    position: fixed;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 5;
+    width: 900px;
+    max-width: 90vw;
+    pointer-events: none;
+  }
+
+  .cambio-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px;
+    border: 1px solid var(--gray);
+    border-bottom: none;
+    background: rgba(22, 17, 27, 0.85);
+    backdrop-filter: blur(4px);
+  }
+  .cambio-bar .label {
+    color: var(--tertiary);
+    font-size: 14px;
+    letter-spacing: 0.5px;
+  }
+  .cambio-bar .badge {
+    color: var(--gray);
+    font-size: 12px;
+  }
+  .cambio-bar .dot-group {
+    display: flex;
+    gap: 8px;
+  }
+  .cambio-bar .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+  }
+  .dot.red { background: #ff5f56; }
+  .dot.yellow { background: #ffbd2e; }
+  .dot.green { background: #27c93f; }
+
+  .title-block {
+    border: 1px solid var(--gray);
+    border-top: none;
+    background: rgba(22, 17, 27, 0.85);
+    backdrop-filter: blur(4px);
+    padding: 50px 60px 60px;
+    text-align: center;
+  }
+
+  .title-block .day {
+    font-size: 18px;
+    color: var(--coral);
+    font-weight: 500;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+
+  .title-block .main {
+    font-size: clamp(40px, 6vw, 72px);
+    font-weight: 800;
+    color: var(--primary);
+    line-height: 1.15;
+    letter-spacing: 1px;
+  }
+
+  .title-block .main em {
+    font-style: normal;
+    color: var(--tertiary);
+  }
+
+  .title-block .divider {
+    width: 200px;
+    height: 3px;
+    background: var(--coral);
+    margin: 24px auto;
+  }
+
+  .title-block .tagline {
+    font-size: 18px;
+    color: var(--green);
+    font-weight: 400;
+  }
+
+  .title-block .footer {
+    margin-top: 32px;
+    font-size: 13px;
+    color: var(--gray);
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    letter-spacing: 1px;
+  }
+
+  .corner {
+    position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--tertiary);
+    border-style: solid;
+    z-index: 6;
+  }
+  .corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+  .corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+</style>
+</head>
+<body>
+
+<canvas id="ascii-canvas"></canvas>
+<div class="crt-overlay"></div>
+<div class="scanline-bar"></div>
+
+<div class="terminal-frame">
+  <div class="cambio-bar">
+    <span class="dot-group">
+      <span class="dot red"></span>
+      <span class="dot yellow"></span>
+      <span class="dot green"></span>
+    </span>
+    <span class="label">CAMBIO_LABS_V1.0</span>
+    <span class="badge">IFE 2026</span>
+  </div>
+  <div class="title-block" style="position:relative;">
+    <div class="corner tl"></div>
+    <div class="corner tr"></div>
+    <div class="corner bl"></div>
+    <div class="corner br"></div>
+    <div class="day">DAY 1</div>
+    <div class="main">
+      Orientation<br>
+      + Journey Login<br>
+      + <em>Core Terminal Fun</em>
+    </div>
+    <div class="divider"></div>
+    <div class="tagline">First contact with the terminal</div>
+    <div class="footer">
+      <span>AI LITERACY TRACK 2026</span>
+      <span>MODULE B1</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function() {
+  const canvas = document.getElementById('ascii-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const COLS = 180;
+  const ROWS = 100;
+  const charSet = ' .:-=+*#%@';
+
+  let W, H;
+
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // ─── Three.js scene ──────────────────────────────────────────
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x16111b);
+
+  const cam = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+  cam.position.set(0, 2, 16);
+  cam.lookAt(0, 0, 0);
+
+  const renderer = new THREE.WebGLRenderer({
+    antialias: false,
+    preserveDrawingBuffer: true,
+  });
+  renderer.setSize(COLS, ROWS);
+  renderer.setPixelRatio(1);
+
+  // Background wave
+  const geo = new THREE.PlaneBufferGeometry(20, 14, 60, 40);
+  geo.rotateX(-Math.PI / 2);
+  const mat = new THREE.MeshBasicMaterial({
+    wireframe: true,
+    color: 0x84e2f6,
+    transparent: true,
+    opacity: 0.35,
+  });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.y = -3;
+  scene.add(mesh);
+
+  const mat2 = new THREE.MeshBasicMaterial({
+    wireframe: true,
+    color: 0xe7c9ff,
+    transparent: true,
+    opacity: 0.15,
+  });
+  const mesh2 = new THREE.Mesh(geo.clone(), mat2);
+  mesh2.position.y = -2.5;
+  mesh2.position.z = 1;
+  mesh2.scale.set(1.1, 1.1, 1.1);
+  scene.add(mesh2);
+
+  // ─── Sharp 3D hexagon ────────────────────────────────────────
+  const hexRadius = 2.2;
+  const hexHeight = 0.3;
+  const hexGeo = new THREE.CylinderGeometry(hexRadius, hexRadius, hexHeight, 6);
+  const hexMat = new THREE.MeshBasicMaterial({
+    color: 0x84e2f6,
+    wireframe: false,
+    transparent: true,
+    opacity: 0.35,
+  });
+  const hexMesh = new THREE.Mesh(hexGeo, hexMat);
+  hexMesh.position.y = 2.5;
+
+  // Wireframe overlay for sharp edges
+  const wireMat = new THREE.MeshBasicMaterial({
+    color: 0xe7c9ff,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.6,
+  });
+  const wireMesh = new THREE.Mesh(hexGeo.clone(), wireMat);
+  wireMesh.position.y = 2.5;
+
+  // Inner ring
+  const ringGeo = new THREE.CylinderGeometry(hexRadius * 0.65, hexRadius * 0.65, hexHeight + 0.05, 6);
+  const ringMat = new THREE.MeshBasicMaterial({
+    color: 0xffafd7,
+    wireframe: true,
+    transparent: true,
+    opacity: 0.25,
+  });
+  const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+  ringMesh.position.y = 2.5;
+  ringMesh.rotation.x = 0;
+  ringMesh.rotation.y = Math.PI / 6;
+
+  // Edge glow lines from center to vertices
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0x84e2f6,
+    transparent: true,
+    opacity: 0.15,
+  });
+  const lineGroup = new THREE.Group();
+  for (let i = 0; i < 6; i++) {
+    const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+    const pts = [
+      new THREE.Vector3(0, 2.5, 0),
+      new THREE.Vector3(Math.cos(angle) * hexRadius, 2.5, Math.sin(angle) * hexRadius),
+    ];
+    const g = new THREE.BufferGeometry().setFromPoints(pts);
+    const l = new THREE.Line(g, lineMat);
+    lineGroup.add(l);
+  }
+
+  // Outer boundary hex ring
+  const ringPts = [];
+  for (let i = 0; i <= 6; i++) {
+    const a = (i / 6) * Math.PI * 2 - Math.PI / 6;
+    ringPts.push(new THREE.Vector3(Math.cos(a) * (hexRadius + 0.25), 2.5, Math.sin(a) * (hexRadius + 0.25)));
+  }
+  const ringGeo2 = new THREE.BufferGeometry().setFromPoints(ringPts);
+  const ringLineMat = new THREE.LineBasicMaterial({
+    color: 0xe7c9ff,
+    transparent: true,
+    opacity: 0.2,
+  });
+  const ringLine = new THREE.Line(ringGeo2, ringLineMat);
+
+  scene.add(hexMesh);
+  scene.add(wireMesh);
+  scene.add(ringMesh);
+  scene.add(lineGroup);
+  scene.add(ringLine);
+
+  // ─── "CAMBIO" 3D text ───────────────────────────────────────
+  const textGroup = new THREE.Group();
+  textGroup.position.y = 2.5;
+  scene.add(textGroup);
+
+  const loader = new THREE.FontLoader();
+  loader.load('https://cdn.jsdelivr.net/npm/three@0.128.0/examples/fonts/helvetiker_regular.typeface.json', function(font) {
+    const textGeo = new THREE.TextGeometry('CAMBIO', {
+      font: font,
+      size: 1.2,
+      height: 0.15,
+      curveSegments: 4,
+      bevelEnabled: true,
+      bevelThickness: 0.03,
+      bevelSize: 0.02,
+      bevelSegments: 3,
+    });
+    textGeo.computeBoundingBox();
+    const cx = (textGeo.boundingBox.max.x + textGeo.boundingBox.min.x) / 2;
+    const textMat = new THREE.MeshBasicMaterial({
+      color: 0xe7c9ff,
+      transparent: true,
+      opacity: 0.7,
+    });
+    const textMesh = new THREE.Mesh(textGeo, textMat);
+    textMesh.position.set(-cx, 0.5, 0);
+    textGroup.add(textMesh);
+
+    const wireTextMat = new THREE.MeshBasicMaterial({
+      color: 0x84e2f6,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.25,
+    });
+    const wireText = new THREE.Mesh(textGeo.clone(), wireTextMat);
+    wireText.position.copy(textMesh.position);
+    textGroup.add(wireText);
+  });
+
+  // ─── Particles ──────────────────────────────────────────────
+  const pCount = 300;
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(pCount * 3);
+  for (let i = 0; i < pCount * 3; i++) {
+    pPos[i] = (Math.random() - 0.5) * 30;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({
+    color: 0x84e2f6,
+    size: 0.05,
+    transparent: true,
+    opacity: 0.2,
+  });
+  const particles = new THREE.Points(pGeo, pMat);
+  particles.position.y = 5;
+  scene.add(particles);
+
+  const vertCount = geo.attributes.position.count;
+  const offscreenCanvas = document.createElement('canvas');
+  offscreenCanvas.width = COLS;
+  offscreenCanvas.height = ROWS;
+  const offCtx = offscreenCanvas.getContext('2d');
+
+  let time = 0;
+
+  // ─── Boot flicker effect ────────────────────────────────────
+  let bootPhase = 0;
+
+  function drawASCII(pixels) {
+    const data = pixels.data;
+    ctx.fillStyle = '#16111b';
+    ctx.fillRect(0, 0, W, H);
+
+    const cellW = W / COLS;
+    const cellH = H / ROWS;
+
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        const idx = (r * COLS + c) * 4;
+        const rVal = data[idx];
+        const gVal = data[idx + 1];
+        const bVal = data[idx + 2];
+        const brightness = 0.299 * rVal + 0.587 * gVal + 0.114 * bVal;
+
+        // Boot flicker: dim everything initially, ramp up
+        let adjusted = brightness;
+        if (bootPhase < 60) {
+          adjusted = brightness * Math.min(1, bootPhase / 30 + Math.random() * 0.3);
+        }
+
+        const charIdx = Math.floor((adjusted / 255) * (charSet.length - 1));
+        const ch = charSet[Math.max(0, Math.min(charIdx, charSet.length - 1))];
+
+        const x = c * cellW;
+        const y = r * cellH;
+
+        let color;
+        if (adjusted < 40) color = '#1a1520';
+        else if (adjusted < 90) color = '#3d3742';
+        else if (adjusted < 140) color = '#84e2f6';
+        else if (adjusted < 200) color = '#e7c9ff';
+        else color = '#faecff';
+
+        ctx.fillStyle = color;
+        ctx.font = `${Math.ceil(cellH * 0.85)}px 'JetBrains Mono', monospace`;
+        ctx.textBaseline = 'top';
+        ctx.fillText(ch, x, y);
+      }
+    }
+
+    // Boot phase text
+    if (bootPhase < 120) {
+      const progress = Math.min(bootPhase / 100, 1);
+      let lines = [];
+      if (bootPhase < 30) lines = ['CAMBIO_SYSTEM_INIT...'];
+      else if (bootPhase < 60) lines = ['CAMBIO_SYSTEM_INIT...', 'LOGO_ASSEMBLY: OK'];
+      else lines = ['CAMBIO_SYSTEM_INIT...', 'LOGO_ASSEMBLY: OK', 'RENDER_ENGINE: STANDBY'];
+
+      ctx.fillStyle = '#84e2f6';
+      ctx.font = '14px \'JetBrains Mono\', monospace';
+      lines.forEach((l, i) => {
+        ctx.globalAlpha = progress;
+        ctx.fillText(l, 20, 20 + i * 22);
+      });
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    time += 0.015;
+
+    if (bootPhase < 120) bootPhase++;
+
+    // Animate wave
+    const pos = mesh.geometry.attributes.position;
+    const pos2 = mesh2.geometry.attributes.position;
+
+    for (let i = 0; i < vertCount; i++) {
+      const x = pos.getX(i);
+      const z = pos.getZ(i);
+      const wave = Math.sin(x * 0.8 + time * 2.0) * 0.5
+                 + Math.sin(z * 0.6 + time * 1.3) * 0.4
+                 + Math.sin((x + z) * 0.4 + time * 0.9) * 0.3;
+      pos.setY(i, wave);
+      pos2.setY(i, wave * 0.6);
+    }
+    pos.needsUpdate = true;
+    pos2.needsUpdate = true;
+
+    mesh.rotation.y += 0.0008;
+    mesh2.rotation.y += 0.0005;
+
+    // Animate hexagon
+    const hexY = 2.5 + Math.sin(time * 0.3) * 0.4;
+    [hexMesh, wireMesh, ringMesh, lineGroup, ringLine].forEach(o => o.position.y = hexY);
+
+    hexMesh.rotation.y = time * 0.5;
+    wireMesh.rotation.y = time * 0.5;
+    ringMesh.rotation.y = time * 0.5 + Math.PI / 6;
+    lineGroup.rotation.y = time * 0.5;
+    ringLine.rotation.y = time * 0.5;
+
+    hexMesh.rotation.x = Math.sin(time * 0.2) * 0.15;
+    wireMesh.rotation.x = Math.sin(time * 0.2) * 0.15;
+
+    // Animate text group
+    textGroup.position.y = hexY - 0.2;
+    textGroup.rotation.y = time * 0.3;
+    textGroup.rotation.x = Math.sin(time * 0.15) * 0.1;
+
+    // Pulse opacity
+    const pulse = 0.25 + Math.sin(time * 1.2) * 0.15;
+    hexMat.opacity = pulse;
+    wireMat.opacity = Math.min(0.7, pulse * 1.8);
+
+    particles.rotation.y += 0.0003;
+
+    renderer.render(scene, cam);
+
+    offCtx.drawImage(renderer.domElement, 0, 0);
+    const pixels = offCtx.getImageData(0, 0, COLS, ROWS);
+    drawASCII(pixels);
+  }
+
+  animate();
+})();
+</script>
+</body>
+</html>

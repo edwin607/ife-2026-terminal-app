@@ -1,0 +1,76 @@
+<h1 id="terminal-cheat-sheet-day-1">Terminal Cheat Sheet — Day 1</h1>
+<h2 id="open-the-terminal">Open the terminal</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr>
+<th>OS</th>
+<th>How to open</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>macOS</td>
+<td>Press <code>⌘ + Space</code>, type <strong>Terminal</strong>, press
+Enter</td>
+</tr>
+<tr>
+<td>Linux</td>
+<td>Press <code>Ctrl + Alt + T</code></td>
+</tr>
+<tr>
+<td>Windows (WSL)</td>
+<td>Press <code>Win + X</code>, choose <strong>Windows Terminal</strong>
+or <strong>Ubuntu</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="first-commands">First commands</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="bu">pwd</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ls</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">mkdir</span> ife-day1</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> ife-day1</span></code></pre></div>
+<hr />
+<h2 id="hello-world">Hello, World</h2>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Hello, world!&quot;</span></span></code></pre></div>
+<h2 id="personalized-greeting">Personalized greeting</h2>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Hello, world! My name is [YOUR NAME].&quot;</span></span></code></pre></div>
+<p>Example:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Hello, world! My name is Maya.&quot;</span></span></code></pre></div>
+<hr />
+<h2 id="fun-commands">Fun commands</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="ex">figlet</span> <span class="at">-f</span> slant <span class="st">&quot;Hello&quot;</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="ex">cowsay</span> <span class="st">&quot;Hello, world!&quot;</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="ex">toilet</span> <span class="at">--gay</span> <span class="st">&quot;Hello&quot;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="bu">echo</span> <span class="st">&quot;Hello&quot;</span> <span class="kw">|</span> <span class="ex">lolcat</span></span></code></pre></div>
+<hr />
+<h2 id="optional-script-version">Optional script version</h2>
+<p>Create a script:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span> <span class="op">&gt;</span> hello.sh <span class="op">&lt;&lt;&#39;EOF&#39;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="st">echo &quot;Hello, world! My name is [YOUR NAME].&quot;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a><span class="op">EOF</span></span></code></pre></div>
+<p>Make it executable:</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chmod</span> +x hello.sh</span></code></pre></div>
+<p>Run it:</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="ex">./hello.sh</span></span></code></pre></div>
+<hr />
+<h2 id="if-you-are-on-windows-and-wsl-is-slow">If you are on Windows and
+WSL is slow</h2>
+<p>Use the cloud-terminal fallback:</p>
+<ul>
+<li>GitHub Codespace, or</li>
+<li>Replit workspace</li>
+</ul>
+<p>Ask a TA if you need help switching.</p>

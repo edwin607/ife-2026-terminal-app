@@ -1,0 +1,1219 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAMBIO_LABS | OPENCODE — CLI FOR AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+  @keyframes scanlineMove { 0%{bottom:100%} 100%{bottom:-100%} }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes fadeScale { from{opacity:0;transform:scale(0.97)} to{opacity:1;transform:scale(1)} }
+  @keyframes pulseGlow { 0%,100%{box-shadow:0 0 8px rgba(231,201,255,0.15)} 50%{box-shadow:0 0 20px rgba(231,201,255,0.3)} }
+
+  :root {
+    --primary: #e7c9ff;
+    --on-primary: #44196b;
+    --primary-container: #d4a5ff;
+    --secondary: #ffafd7;
+    --tertiary: #84e2f6;
+    --surface: #12131d;
+    --surface-container: #1e1f2a;
+    --surface-container-low: #1a1b26;
+    --surface-container-high: #282935;
+    --surface-container-highest: #333440;
+    --outline: #978e9b;
+    --outline-variant: #4b4450;
+    --on-surface: #e2e1f1;
+    --on-surface-variant: #cec3d1;
+    --error: #ffb4ab;
+    --bg: #0D0E14;
+    --amber: #d29922;
+    --green: #3fb950;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100%; height: 100%;
+    background: var(--bg);
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--on-surface);
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .crt-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background:
+      linear-gradient(rgba(18,16,16,0) 50%, rgba(0,0,0,0.06) 50%),
+      linear-gradient(90deg, rgba(255,0,0,0.012), rgba(0,255,0,0.006), rgba(0,0,255,0.012));
+    background-size: 100% 4px, 3px 100%;
+    pointer-events: none; z-index: 1000;
+    opacity: 0.3;
+  }
+
+  .scanline-bar {
+    width: 100%; height: 80px;
+    z-index: 1001;
+    background: linear-gradient(0deg, transparent 0%, rgba(255,255,255,0.02) 50%, transparent 100%);
+    opacity: 0.1;
+    position: fixed;
+    bottom: 100%;
+    animation: scanlineMove 8s linear infinite;
+    pointer-events: none;
+  }
+
+  .presentation {
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--surface-container);
+    border-bottom: 1px solid var(--outline-variant);
+    flex-shrink: 0;
+  }
+
+  .titlebar-dots { display: flex; gap: 8px; }
+  .titlebar-dot { width: 12px; height: 12px; border-radius: 50%; }
+  .titlebar-dot.red { background: #ff5f56; }
+  .titlebar-dot.yellow { background: #ffbd2e; }
+  .titlebar-dot.green { background: #27c93f; }
+
+  .titlebar-label {
+    color: var(--on-surface);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+  .titlebar-label .tertiary { color: var(--tertiary); }
+  .titlebar-progress { font-size: 11px; color: var(--outline); }
+
+  .slide-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 48px;
+    overflow: hidden;
+    position: relative;
+  }
+
+  .slide {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    animation: fadeIn 0.35s ease-out;
+  }
+  .slide.active { display: flex; }
+
+  /* ---- Title slide ---- */
+  .slide-title {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .slide-title .banner-box {
+    border: 1px solid color-mix(in srgb, var(--primary) 30%, transparent);
+    background: var(--surface-container);
+    padding: 40px 60px;
+    max-width: 720px;
+  }
+  .slide-title .brand-line {
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 12px;
+  }
+  .slide-title .brand-line::before { content: "> "; color: var(--outline); }
+  .slide-title h1 {
+    font-size: 34px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 8px 0 4px;
+  }
+  .slide-title .subtitle {
+    color: var(--outline);
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+  .slide-title .byline {
+    color: var(--tertiary);
+    font-size: 12px;
+    margin-top: 16px;
+  }
+  .slide-title .curriculum-note {
+    color: var(--outline);
+    font-size: 11px;
+    margin-top: 20px;
+    padding: 12px;
+    border: 1px dashed var(--outline-variant);
+    line-height: 1.5;
+  }
+
+  /* ---- Concept slides (full-width, no screenshot) ---- */
+  .concept-slide {
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .concept-slide .concept-box-inner {
+    max-width: 780px;
+    padding: 20px 0;
+  }
+  .concept-slide .concept-icon {
+    font-size: 36px;
+    margin-bottom: 16px;
+    opacity: 0.6;
+  }
+  .concept-slide h2 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 16px;
+  }
+  .concept-slide .concept-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    text-align: left;
+    margin-top: 12px;
+  }
+  .concept-slide .concept-grid .col {
+    border: 1px solid var(--outline-variant);
+    background: var(--surface-container-low);
+    padding: 18px 20px;
+  }
+  .concept-slide .concept-grid .col h3 {
+    font-size: 12px;
+    color: var(--tertiary);
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+  }
+  .concept-slide .concept-grid .col p, .concept-slide .concept-grid .col li {
+    font-size: 12px;
+    color: var(--on-surface-variant);
+    line-height: 1.6;
+  }
+  .concept-slide .concept-grid .col ul {
+    list-style: none;
+    padding: 0;
+  }
+  .concept-slide .concept-grid .col ul li {
+    padding-left: 14px;
+    position: relative;
+    margin-bottom: 3px;
+  }
+  .concept-slide .concept-grid .col ul li::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+  }
+  .concept-slide .big-quote {
+    font-size: 15px;
+    color: var(--primary);
+    font-weight: 500;
+    margin-top: 16px;
+    padding: 12px 20px;
+    border-left: 3px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 6%, transparent);
+    text-align: left;
+  }
+  .concept-slide .big-quote .attribution {
+    font-size: 11px;
+    color: var(--outline);
+    margin-top: 6px;
+    font-weight: 400;
+  }
+
+  /* ---- Standard step slides ---- */
+  .step-header {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+  }
+  .step-number {
+    color: var(--tertiary);
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .step-number::before { content: "["; color: var(--outline); }
+  .step-number::after { content: "]"; color: var(--outline); }
+
+  .step-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+
+  .step-body {
+    display: flex;
+    gap: 28px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .step-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .step-content p, .step-content li {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .step-content strong { color: var(--on-surface); font-weight: 600; }
+  .step-content .desc {
+    color: var(--on-surface-variant);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .step-content ul {
+    list-style: none;
+    padding: 0;
+  }
+  .step-content ul li {
+    padding-left: 16px;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .step-content ul li::before {
+    content: ">";
+    position: absolute;
+    left: 0;
+    color: var(--primary);
+  }
+
+  .cmd-box {
+    background: var(--surface-container-low);
+    border: 1px solid var(--outline-variant);
+    padding: 14px 18px;
+    font-size: 13px;
+    line-height: 1.6;
+    overflow-x: auto;
+  }
+  .cmd-box .prompt { color: var(--green); }
+  .cmd-box .oc { color: var(--tertiary); }
+  .cmd-box .output { color: var(--outline); }
+
+  .note-box {
+    border-left: 3px solid var(--amber);
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--amber) 8%, transparent);
+    font-size: 12px;
+    color: var(--amber);
+  }
+  .info-box {
+    border-left: 3px solid var(--tertiary);
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--tertiary) 8%, transparent);
+    font-size: 12px;
+    color: var(--tertiary);
+  }
+
+  .screenshot-area {
+    width: 380px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--outline-variant);
+    background: var(--surface-container-low);
+    position: relative;
+    animation: pulseGlow 3s ease-in-out infinite;
+    min-height: 200px;
+  }
+  .screenshot-area .icon {
+    font-size: 32px;
+    color: var(--outline);
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+  .screenshot-area .label {
+    color: var(--outline);
+    font-size: 11px;
+    text-align: center;
+    padding: 0 20px;
+    line-height: 1.5;
+  }
+  .screenshot-area .label strong { color: var(--on-surface-variant); font-weight: 500; }
+  .screenshot-area .dim {
+    font-size: 10px;
+    color: color-mix(in srgb, var(--outline) 50%, transparent);
+    margin-top: 8px;
+  }
+
+  .trouble-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .trouble-table th {
+    color: var(--primary);
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--outline-variant);
+  }
+  .trouble-table td {
+    color: var(--on-surface-variant);
+    padding: 8px 10px;
+    border-bottom: 1px solid color-mix(in srgb, var(--outline-variant) 40%, transparent);
+    vertical-align: top;
+  }
+  .trouble-table td:first-child {
+    color: var(--tertiary);
+    font-size: 11px;
+    white-space: nowrap;
+  }
+
+  .nav-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--surface-container);
+    border-top: 1px solid var(--outline-variant);
+    flex-shrink: 0;
+  }
+  .nav-btn {
+    background: var(--surface-container-high);
+    border: 1px solid var(--outline-variant);
+    color: var(--on-surface);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 8px 18px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .nav-btn:hover {
+    background: var(--surface-container-highest);
+    border-color: var(--outline);
+  }
+  .nav-btn:disabled { opacity: 0.3; cursor: default; }
+  .nav-dots { display: flex; gap: 6px; align-items: center; }
+  .nav-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--outline-variant);
+    border: none; cursor: pointer; padding: 0;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .nav-dot:hover { background: var(--outline); transform: scale(1.3); }
+  .nav-dot.active {
+    background: var(--primary);
+    box-shadow: 0 0 6px rgba(231, 201, 255, 0.4);
+  }
+
+  .step-content::-webkit-scrollbar { width: 4px; }
+  .step-content::-webkit-scrollbar-track { background: transparent; }
+  .step-content::-webkit-scrollbar-thumb { background: var(--outline-variant); }
+
+  kbd {
+    display: inline-block;
+    background: var(--surface-container-high);
+    border: 1px solid var(--outline-variant);
+    border-radius: 3px;
+    padding: 1px 6px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--on-surface);
+  }
+
+  .split-cmds {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .big-number {
+    font-size: 56px;
+    font-weight: 800;
+    color: var(--primary);
+    opacity: 0.15;
+    position: absolute;
+    right: 20px;
+    bottom: 10px;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  @media (max-width: 800px) {
+    .slide-container { padding: 20px 16px; }
+    .step-body { flex-direction: column; }
+    .screenshot-area { width: 100%; min-height: 120px; }
+    .step-title { font-size: 18px; }
+    .slide-title .banner-box { padding: 24px 20px; }
+    .slide-title h1 { font-size: 24px; }
+    .concept-slide .concept-grid { grid-template-columns: 1fr; }
+    .split-cmds { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="crt-overlay"></div>
+<div class="scanline-bar"></div>
+
+<div class="presentation">
+
+  <!-- Title bar -->
+  <div class="titlebar">
+    <div class="titlebar-dots">
+      <div class="titlebar-dot red"></div>
+      <div class="titlebar-dot yellow"></div>
+      <div class="titlebar-dot green"></div>
+    </div>
+    <div class="titlebar-label">
+      <span class="tertiary">CAMBIO_SYSTEM_READY</span> — CLI + AI: THE TERMINAL AS A TOOL
+    </div>
+    <div class="titlebar-progress" id="slideCounter">1 / 16</div>
+  </div>
+
+  <!-- Slides -->
+  <div class="slide-container">
+
+    <!-- ===== SLIDE 0: Title ===== -->
+    <div class="slide slide-title active" data-index="0">
+      <div class="banner-box">
+        <div class="brand-line">CAMBIO LABS V1.0 // IFE 2026</div>
+        <h1>CLI + AI: The Terminal as a Tool</h1>
+        <div class="subtitle">Why you would use a terminal instead of a browser, and how to get started</div>
+        <div class="byline">AI Literacy Track — OpenCode setup guide</div>
+        <div class="curriculum-note">
+          This session covers: what a CLI is · why AI works better in the terminal ·<br>
+          terminal basics (cd, ls, mkdir) · WSL for Windows · installing and using OpenCode
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 1: What is a CLI? ===== -->
+    <div class="slide concept-slide" data-index="1">
+      <div class="concept-box-inner">
+        <div class="concept-icon">&gt;_</div>
+        <h2>What is a CLI?</h2>
+        <p style="color:var(--on-surface-variant);font-size:13px;max-width:640px;margin:0 auto 16px">
+          <strong>CLI</strong> stands for <strong>Command Line Interface</strong>. Instead of clicking buttons
+          in a window, you type instructions as text. The computer responds line by line.
+        </p>
+        <div class="concept-grid">
+          <div class="col">
+            <h3>BROWSER (GUI) — A PRODUCT</h3>
+            <ul>
+              <li>You use what the company built</li>
+              <li>They decide what you can do and see</li>
+              <li>Your data lives on their servers</li>
+              <li>Context resets with every new chat</li>
+              <li>Copy-paste is your only bridge to your files</li>
+            </ul>
+          </div>
+          <div class="col">
+            <h3>TERMINAL (CLI) — A TOOL</h3>
+            <ul>
+              <li>You run the software on your machine</li>
+              <li>No limits except your imagination and the tool's capability</li>
+              <li>Your files stay on your computer</li>
+              <li>The AI reads your actual project, not a summary you typed</li>
+              <li>You can chain tools: read, edit, run, test in one session</li>
+            </ul>
+          </div>
+        </div>
+        <div class="big-quote">
+          A browser is a product. A CLI is a tool. One serves you what someone else built.
+          The other lets you build.
+          <div class="attribution">— Cambio Labs, AI Literacy Track</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 2: Why CLI for AI? ===== -->
+    <div class="slide concept-slide" data-index="2">
+      <div class="concept-box-inner">
+        <div class="concept-icon">&#x1F50D;</div>
+        <h2>Why use a CLI for AI?</h2>
+        <div class="concept-grid" style="grid-template-columns:1fr">
+          <div class="col">
+            <h3>THE CONTEXT ADVANTAGE</h3>
+            <p>
+              When you use AI in a browser, you paste a question and maybe a file.
+              The AI only sees what you give it in that text box.
+            </p>
+            <p style="margin-top:8px">
+              When you use AI in a terminal, the AI sees your actual project.
+              Your file structure. Your code. Your folder of notes. Your data exports.
+              <strong>It reads everything you let it see.</strong>
+            </p>
+          </div>
+        </div>
+        <div class="concept-grid" style="margin-top:0">
+          <div class="col">
+            <h3>IT SEES YOUR ACTUAL FILES</h3>
+            <p>No more copy-paste. No more "imagine I have a file that does X."
+            The AI just reads the file. It works with what is really there, not
+            what you remembered to paste.</p>
+          </div>
+          <div class="col">
+            <h3>IT KEEPS WORKING WITH YOU</h3>
+            <p>In a browser, each chat is a bubble. In a terminal, the session
+            holds context across the whole conversation. You can ask follow-ups,
+            make changes, run code, and the AI remembers what came before.</p>
+          </div>
+          <div class="col">
+            <h3>IT IS REPRODUCIBLE</h3>
+            <p>Every command you run is text. You can save it, share it, re-run
+            it. No "click the button in the top right then the dropdown then..."
+            Just text that says exactly what happened.</p>
+          </div>
+          <div class="col">
+            <h3>IT WORKS OFFLINE</h3>
+            <p>CLI tools can run local models. No internet required. No server
+            deciding to change the UI or remove a feature. The tool is yours.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 3: Let's have fun first — cmatrix ===== -->
+    <div class="slide" data-index="3">
+      <div class="step-header">
+        <span class="step-number">WARMUP</span>
+        <span class="step-title">The terminal can be fun</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Before we do anything serious — the terminal is not all work. Try this:</p>
+          <div class="cmd-box">
+            <span class="prompt">$ cmatrix -r</span>
+          </div>
+          <div class="desc">
+            That is the Matrix digital rain effect. The <span class="oc">-r</span> flag randomizes the colors.
+            It does nothing useful. That is the point.
+          </div>
+          <div class="desc"><strong>If you do not have cmatrix installed:</strong></div>
+          <div class="split-cmds">
+            <div class="cmd-box" style="font-size:12px">
+              macOS:<br>
+              <span class="prompt">$ brew install cmatrix</span>
+            </div>
+            <div class="cmd-box" style="font-size:12px">
+              Linux:<br>
+              <span class="prompt">$ sudo apt install cmatrix</span>
+            </div>
+          </div>
+          <div class="desc">
+            Hit <kbd>Ctrl</kbd>+<kbd>C</kbd> to stop it. That is how you stop most running terminal programs.
+          </div>
+          <div class="note-box">
+            This is the first thing you should do in a terminal: run something
+            useless that feels cool. It breaks the fear of the blank screen.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Terminal showing cmatrix -r —<br>
+            green/random Matrix rain characters falling down the screen
+          </div>
+          <div class="dim">640 x 400</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 4: The terminal is your filesystem ===== -->
+    <div class="slide" data-index="4">
+      <div class="step-header">
+        <span class="step-number">TERMINAL BASICS</span>
+        <span class="step-title">The terminal reflects your folder structure</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Every terminal session starts <strong>somewhere</strong> in your computer's folders.
+            Think of it as a cursor moving through your file system.</p>
+          <div class="desc"><strong>Your first commands:</strong></div>
+          <div class="cmd-box">
+            <span class="prompt">$ pwd</span><br>
+            <span class="output">/Users/you/Documents</span><br><br>
+            <span class="prompt">$ ls</span><br>
+            <span class="output">Documents  Downloads  Projects  notes.txt</span><br><br>
+            <span class="prompt">$ cd Projects</span><br>
+            <span class="prompt">$ ls</span><br>
+            <span class="output">my-app  blog  ideas.md</span><br><br>
+            <span class="prompt">$ cd ..</span><br>
+            <span class="prompt">$ pwd</span><br>
+            <span class="output">/Users/you</span>
+          </div>
+          <div class="desc">
+            <span class="oc">pwd</span> = "print working directory" (where am I?)<br>
+            <span class="oc">ls</span> = "list" (what is here?)<br>
+            <span class="oc">cd</span> = "change directory" (go there)<br>
+            <span class="oc">cd ..</span> = go up one folder<br>
+            <span class="oc">mkdir</span> = "make directory" (create a new folder)
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Terminal showing pwd, ls, cd, cd ..<br>
+            with a simple folder tree being navigated
+          </div>
+          <div class="dim">640 x 400</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 5: mkdir and your first folder ===== -->
+    <div class="slide" data-index="5">
+      <div class="step-header">
+        <span class="step-number">TERMINAL BASICS</span>
+        <span class="step-title">Create your own space</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Make a folder to work in. This is where you will run the AI tool later.</p>
+          <div class="cmd-box">
+            <span class="prompt">$ mkdir ai-playground</span><br>
+            <span class="prompt">$ cd ai-playground</span><br>
+            <span class="prompt">$ mkdir notes</span><br>
+            <span class="prompt">$ ls</span><br>
+            <span class="output">notes</span>
+          </div>
+          <div class="desc">
+            You just created a folder called <span class="oc">ai-playground</span> and inside it
+            another folder called <span class="oc">notes</span>. This is your sandbox.
+          </div>
+          <div class="desc"><strong>Think of it this way:</strong></div>
+          <div class="cmd-box" style="font-size:12px">
+            <span class="output">ai-playground/          ← you are here<br>
+            └── notes/             ← you made this</span>
+          </div>
+          <div class="desc">
+            Everything you do with the AI tool will happen inside this folder.
+            Your files, your data, your context.
+          </div>
+          <div class="info-box">
+            The terminal is just a text interface to the same files you see in Finder or File Explorer.
+            <strong>Every file you see in the GUI, you can reach from the terminal.</strong>
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Terminal showing mkdir, cd, ls —<br>
+            creating ai-playground/notes and confirming it exists
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 6: WSL for Windows ===== -->
+    <div class="slide" data-index="6">
+      <div class="step-header">
+        <span class="step-number">WINDOWS</span>
+        <span class="step-title">WSL — Linux inside Windows</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>If you are on Windows, you get the best terminal experience through
+          <strong>WSL</strong> — Windows Subsystem for Linux. It runs a real Linux environment
+          inside Windows, no dual booting.</p>
+          <div class="desc"><strong>Install WSL (one time, 5 minutes):</strong></div>
+          <div class="cmd-box">
+            <span class="prompt">$ wsl --install</span>
+          </div>
+          <div class="desc">
+            Run that in PowerShell or Command Prompt <strong>as Administrator</strong>.
+            It installs a full Ubuntu terminal on your machine.
+          </div>
+          <div class="desc"><strong>After install:</strong></div>
+          <ul>
+            <li>Restart your computer</li>
+            <li>Open "Ubuntu" from the Start Menu</li>
+            <li>Create a username and password (for the Linux environment)</li>
+            <li>You now have a terminal that works exactly like macOS or Linux</li>
+          </ul>
+          <div class="note-box">
+            Your Windows files are at <span class="oc">/mnt/c/Users/you</span> inside WSL.
+            You can access everything, but it is faster to keep your project files inside the Linux filesystem (your home folder).
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> PowerShell running wsl --install,<br>
+            or the Ubuntu terminal after first setup showing the<br>
+            username creation prompt
+          </div>
+          <div class="dim">640 x 400</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 7: Install OpenCode ===== -->
+    <div class="slide" data-index="7">
+      <div class="step-header">
+        <span class="step-number">STEP 1</span>
+        <span class="step-title">Install OpenCode</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Now you put the AI tool into your terminal. One command:</p>
+          <div class="cmd-box">
+            <span class="prompt">$ curl -fsSL https://opencode.ai/install | bash</span>
+          </div>
+          <div class="desc">
+            That downloads and installs the <strong>opencode</strong> binary — an open source AI coding agent.
+            No Node.js needed. It is a compiled Rust program, about 40MB.
+          </div>
+          <div class="desc"><strong>Other install methods:</strong></div>
+          <div class="split-cmds">
+            <div class="cmd-box" style="font-size:12px">
+              npm:<br>
+              <span class="prompt">$ npm install -g opencode-ai</span>
+            </div>
+            <div class="cmd-box" style="font-size:12px">
+              Homebrew:<br>
+              <span class="prompt">$ brew install anomalyco/tap/opencode</span>
+            </div>
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Terminal running the curl install —<br>
+            download progress and install output
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 8: Confirm install ===== -->
+    <div class="slide" data-index="8">
+      <div class="step-header">
+        <span class="step-number">STEP 2</span>
+        <span class="step-title">Confirm it landed</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <div class="cmd-box">
+            <span class="prompt">$ opencode --version</span><br>
+            <span class="output">0.82.0</span>
+          </div>
+          <div class="desc">
+            If you see a version number, you are done installing.
+          </div>
+          <div class="desc">
+            If you get <span class="oc">command not found</span>, restart your terminal.
+            The install script adds OpenCode to your PATH, but the change only applies to new terminal sessions.
+          </div>
+          <div class="info-box">
+            <strong>Bonus:</strong> Because OpenCode is a single binary, you can put it on a USB drive
+            and run it on any machine. No installers, no runtimes, no dependencies.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Terminal showing<br>
+            <span class="oc">$ opencode --version</span> → <span class="oc">0.82.0</span>
+          </div>
+          <div class="dim">640 x 150</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 9: Connect a provider ===== -->
+    <div class="slide" data-index="9">
+      <div class="step-header">
+        <span class="step-number">STEP 3</span>
+        <span class="step-title">Connect an AI provider</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>OpenCode is the engine. It still needs a model to talk to.</p>
+          <div class="cmd-box">
+            <span class="prompt">$ opencode</span><br><br>
+            <span class="oc" style="color:var(--primary)">&gt; /connect</span>
+          </div>
+          <div class="desc">
+            The <span class="oc">/connect</span> command shows a list of providers.
+          </div>
+          <div class="desc"><strong>Easiest option — use your existing accounts:</strong></div>
+          <ul>
+            <li><strong>GitHub Copilot:</strong> Log in with your GitHub account</li>
+            <li><strong>ChatGPT Plus/Pro:</strong> Log in with your OpenAI account</li>
+            <li><strong>OpenCode Zen:</strong> Sign up at opencode.ai/auth, pay-as-you-go</li>
+            <li><strong>API key:</strong> Paste an Anthropic, OpenAI, or Google key directly</li>
+          </ul>
+          <div class="note-box">
+            75+ providers supported. Including local models via Ollama — no internet, no cost, runs entirely on your laptop.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI with the /connect provider list<br>
+            showing options: opencode, Anthropic, OpenAI, Google,<br>
+            GitHub Copilot, Ollama, and more
+          </div>
+          <div class="dim">640 x 400</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 10: Initialize in your folder ===== -->
+    <div class="slide" data-index="10">
+      <div class="step-header">
+        <span class="step-number">STEP 4</span>
+        <span class="step-title">Initialize in your project</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Navigate to the folder you created earlier and start the AI:</p>
+          <div class="cmd-box">
+            <span class="prompt">$ cd ai-playground</span><br>
+            <span class="prompt">$ opencode</span>
+          </div>
+          <div class="desc">
+            Then tell OpenCode to learn about this folder:
+          </div>
+          <div class="cmd-box">
+            <span class="oc" style="color:var(--primary)">&gt; /init</span>
+          </div>
+          <div class="desc">
+            OpenCode scans the folder and creates an <span class="oc">AGENTS.md</span> file
+            that stores project context. Every time you come back, it remembers
+            what this project is about.
+          </div>
+          <div class="info-box">
+            <strong>This is the context advantage in action.</strong> The AI now knows
+            exactly what is in your folder. Not a summary you typed. Not a file you
+            remembered to attach. The actual contents.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI during /init — showing it<br>
+            scanning files and generating AGENTS.md
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 11: Ask questions ===== -->
+    <div class="slide" data-index="11">
+      <div class="step-header">
+        <span class="step-number">STEP 5a</span>
+        <span class="step-title">Talk to your project</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>You can ask OpenCode about anything in your folder. No copy-paste needed.</p>
+          <div class="cmd-box" style="line-height:1.7">
+            <span class="oc" style="color:var(--primary)">&gt; What is in my notes folder?</span><br>
+            <span class="output" style="color:var(--green)">[reads the folder and summarizes the files...]</span>
+          </div>
+          <div class="desc">
+            OpenCode reads files directly from your disk. It is not guessing based on
+            what you pasted into a text box.
+          </div>
+          <div class="desc"><strong>Use <kbd>@</kbd> to point to specific files:</strong></div>
+          <div class="cmd-box" style="font-size:12px;line-height:1.7">
+            <span class="oc" style="color:var(--primary)">&gt; Summarize @notes/research.md and tell me what is missing</span>
+          </div>
+          <div class="desc">
+            The <kbd>@</kbd> key opens a fuzzy file finder. Start typing and it jumps
+            to the right file.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI with @ file search open —<br>
+            fuzzy matching file names as you type
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 12: Make changes ===== -->
+    <div class="slide" data-index="12">
+      <div class="step-header">
+        <span class="step-number">STEP 5b</span>
+        <span class="step-title">Plan first, build second</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>Press <kbd>Tab</kbd> to switch to <strong>Plan mode</strong>. The AI will explain what it would do without touching anything.</p>
+          <div class="cmd-box" style="line-height:1.7">
+            <span class="output" style="color:var(--outline)">[Plan mode — status bar says "plan"]</span><br>
+            <span class="oc" style="color:var(--primary)">&gt; Create a file called ideas.md with 5 venture ideas<br>
+            &nbsp; based on the notes in my notes folder.</span><br>
+            <span class="output">OpenCode describes the plan without writing anything...</span>
+          </div>
+          <div class="desc">
+            Review the plan. If it looks right, press <kbd>Tab</kbd> to switch to <strong>Build mode</strong>:
+          </div>
+          <div class="cmd-box">
+            <span class="oc" style="color:var(--primary)">&gt; Go ahead.</span><br>
+            <span class="output" style="color:var(--green)">[creates ideas.md with the content]</span>
+          </div>
+          <div class="note-box">
+            Plan mode is the safety net. Use it until you trust what the AI will do.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI in Plan mode — the "plan"<br>
+            indicator in the status bar and OpenCode's proposed steps
+          </div>
+          <div class="dim">640 x 400</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 13: Undo, redo, share ===== -->
+    <div class="slide" data-index="13">
+      <div class="step-header">
+        <span class="step-number">STEP 5c</span>
+        <span class="step-title">Undo, redo, and share</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>OpenCode tracks every change. If the AI does something you did not want:</p>
+          <div class="cmd-box">
+            <span class="oc" style="color:var(--primary)">&gt; /undo</span>
+          </div>
+          <div class="desc">
+            Reverts the last change. Run it multiple times to walk back further.
+          </div>
+          <div class="cmd-box" style="margin-top:6px">
+            <span class="oc" style="color:var(--primary)">&gt; /redo</span>
+          </div>
+          <div class="desc">
+            Reapplies the last undone change.
+          </div>
+          <div class="desc" style="margin-top:10px"><strong>Share your session with someone:</strong></div>
+          <div class="cmd-box">
+            <span class="oc" style="color:var(--primary)">&gt; /share</span><br>
+            <span class="output">→ https://opencode.ai/s/4XP1fce5</span>
+          </div>
+          <div class="desc">
+            Creates a link to the entire conversation. Anyone with the link can see
+            what you asked and what the AI did.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI after /undo —<br>
+            showing the reverted file state
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 14: Make it yours ===== -->
+    <div class="slide" data-index="14">
+      <div class="step-header">
+        <span class="step-number">STEP 6</span>
+        <span class="step-title">Customize</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <p>OpenCode is built to be adapted to how you work.</p>
+          <ul>
+            <li><strong>Themes:</strong> <span class="oc">/theme</span> to switch look and feel</li>
+            <li><strong>Custom commands:</strong> Add your own <span class="oc">/commands</span> to the palette</li>
+            <li><strong>Keybinds:</strong> Remap every shortcut in <span class="oc">opencode.jsonc</span></li>
+            <li><strong>LSPs:</strong> Auto-loads language servers for syntax-aware editing</li>
+            <li><strong>Images:</strong> Drag and drop screenshots or mockups into the prompt</li>
+          </ul>
+          <div class="desc" style="margin-top:8px">
+            Config file location:
+          </div>
+          <div class="cmd-box" style="font-size:12px">
+            <span class="output">~/.config/opencode/opencode.jsonc</span>
+          </div>
+          <div class="info-box">
+            The config is a JSON file with comments (<span class="oc">.jsonc</span>). You can edit it by hand or use the <span class="oc">/config</span> command.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x1F4F7;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> OpenCode TUI with a custom theme,<br>
+            or the opencode.jsonc config file showing theme/keybind settings
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== SLIDE 15: Troubleshooting ===== -->
+    <div class="slide" data-index="15">
+      <div class="step-header">
+        <span class="step-number">TROUBLESHOOTING</span>
+        <span class="step-title">When something does not work</span>
+      </div>
+      <div class="step-body">
+        <div class="step-content">
+          <table class="trouble-table">
+            <tr>
+              <th>Problem</th>
+              <th>Try this</th>
+            </tr>
+            <tr>
+              <td>opencode: command not<br>found</td>
+              <td>Restart your terminal. If that does not fix it, check <span class="oc">~/.opencode/bin</span> is in your PATH. On Windows, use WSL.</td>
+            </tr>
+            <tr>
+              <td>curl install fails</td>
+              <td>Try npm: <span class="oc">npm install -g opencode-ai</span>. Or download the binary from GitHub releases.</td>
+            </tr>
+            <tr>
+              <td>No provider shows in<br>/connect</td>
+              <td>Run <span class="oc">/connect</span> again. The list loads from the network. If you have a key, add it manually in <span class="oc">opencode.jsonc</span>.</td>
+            </tr>
+            <tr>
+              <td>Model is too slow or<br>keeps erroring</td>
+              <td>Switch providers. Zen gives curated, fast models. Ollama gives free local models.</td>
+            </tr>
+            <tr>
+              <td>AI does not understand<br>my project</td>
+              <td>Run <span class="oc">/init</span> again. You can also edit AGENTS.md by hand to add more context.</td>
+            </tr>
+            <tr>
+              <td>I broke something<br>and need help</td>
+              <td>Run <span class="oc">/share</span> and send the link to a TA or teammate. Or ask at <strong>opencode.ai/discord</strong>.</td>
+            </tr>
+          </table>
+          <div class="big-quote" style="margin-top:12px;font-size:13px">
+            You will not break anything permanent. Every change can be undone with <span class="oc">/undo</span>.
+            The terminal is not fragile — it is the most resilient tool on your computer.
+          </div>
+        </div>
+        <div class="screenshot-area">
+          <div class="icon">&#x26A0;&#xFE0F;</div>
+          <div class="label">
+            <strong>Screenshot:</strong> Troubleshooting example —<br>
+            "command not found" or provider connection error
+          </div>
+          <div class="dim">640 x 300</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Navigation -->
+  <div class="nav-bar">
+    <div>
+      <button class="nav-btn" id="prevBtn" disabled>&#8592; Back</button>
+    </div>
+    <div class="nav-dots" id="navDots"></div>
+    <div>
+      <button class="nav-btn" id="nextBtn">Next &#8594;</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  const prevBtn = document.getElementById('prevBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const counter = document.getElementById('slideCounter');
+  const dotsContainer = document.getElementById('navDots');
+
+  let current = 0;
+
+  slides.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'nav-dot' + (i === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'Go to slide ' + (i + 1));
+    dot.addEventListener('click', () => goTo(i));
+    dotsContainer.appendChild(dot);
+  });
+
+  function goTo(index) {
+    if (index < 0) index = 0;
+    if (index >= slides.length) index = slides.length - 1;
+    if (index === current) return;
+
+    slides[current].classList.remove('active');
+    slides[current].style.display = 'none';
+    current = index;
+    slides[current].style.display = 'flex';
+    void slides[current].offsetWidth;
+    slides[current].classList.add('active');
+    updateUI();
+  }
+
+  function updateUI() {
+    prevBtn.disabled = current === 0;
+    nextBtn.disabled = current === slides.length - 1;
+    counter.textContent = (current + 1) + ' / ' + slides.length;
+    dotsContainer.querySelectorAll('.nav-dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === current);
+    });
+  }
+
+  prevBtn.addEventListener('click', () => goTo(current - 1));
+  nextBtn.addEventListener('click', () => goTo(current + 1));
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      if (current < slides.length - 1) goTo(current + 1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (current > 0) goTo(current - 1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      goTo(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      goTo(slides.length - 1);
+    }
+  });
+
+  slides.forEach((s, i) => {
+    if (i === 0) {
+      s.style.display = 'flex';
+    } else {
+      s.style.display = 'none';
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
